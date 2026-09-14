@@ -29,3 +29,7 @@ vite.config.ts.timestamp-*
 
 # Local planning scratch
 /CLAUDE.local.md
+
+# local tool state / test artifacts
+.omc/
+.playwright-mcp/
