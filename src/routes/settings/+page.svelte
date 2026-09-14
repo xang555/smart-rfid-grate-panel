@@ -3,7 +3,7 @@
   import AppShell from '$lib/components/AppShell.svelte';
   import FieldRenderer from '$lib/components/FieldRenderer.svelte';
   import ArrayField from '$lib/components/ArrayField.svelte';
-  import { stringify } from 'smol-toml';
+  import { renderToml } from '$lib/toml-render';
 
   let { data }: { data: PageData } = $props();
 
@@ -42,7 +42,9 @@
   }
 
   const rawPreview = $derived.by(() => {
-    try { return stringify(draft); } catch { return '# invalid value'; }
+    // Same renderer the server writes with, so the preview cannot drift from
+    // the file — and the flat section's '' key never reaches TOML as a name.
+    try { return renderToml(current.schema, draft); } catch { return '# invalid value'; }
   });
 
   async function save() {

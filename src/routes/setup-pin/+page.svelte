@@ -37,7 +37,7 @@
       <h1 class="text-lg font-semibold">Create the panel PIN</h1>
       <p class="text-sm text-ink-soft mt-1">Exactly 6 digits. Wrong entries lock this device for 15 minutes after 5 tries.</p>
     </div>
-    <PinPad label="PIN" bind:value={pin} autocomplete="new-password" disabled={busy} />
+    <PinPad label="PIN" bind:value={pin} autocomplete="new-password" disabled={busy} autofocus />
     <PinPad label="Confirm PIN" bind:value={confirm} autocomplete="new-password" disabled={busy} />
     {#if error}<p role="alert" class="text-sm text-status-error">{error}</p>{/if}
     <button

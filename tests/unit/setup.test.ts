@@ -4,9 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { openDb } from '../../src/lib/server/db';
-import { isInstalled, runSetup, setRunForTests, resetRunForTests } from '../../src/lib/server/setup';
+import { isInstalled, runSetup, setRunForTests, resetRunForTests, isZipUrl } from '../../src/lib/server/setup';
 import { clearLogs, recentLogs } from '../../src/lib/server/services/logbus';
-import { setProjectPath } from '../../src/lib/server/settings';
+import { setProjectPath, getConfig } from '../../src/lib/server/settings';
 
 let db: any, dir: string;
 
@@ -41,6 +41,84 @@ describe('isInstalled', () => {
   });
 });
 
+describe('isZipUrl', () => {
+  it('accepts http and https', () => {
+    expect(isZipUrl('https://example.com/a.zip')).toBe(true);
+    expect(isZipUrl('http://192.168.1.10/releases/asian-pj.zip')).toBe(true);
+  });
+
+  it('refuses anything else the shell must not see', () => {
+    expect(isZipUrl('file:///etc/passwd')).toBe(false);
+    expect(isZipUrl('javascript:alert(1)')).toBe(false);
+    expect(isZipUrl('ftp://example.com/a.zip')).toBe(false);
+    expect(isZipUrl('not a url')).toBe(false);
+    expect(isZipUrl('')).toBe(false);
+  });
+});
+
+describe('runSetup download url', () => {
+  function fakeSuccess() {
+    return async () => {
+      const p: any = new EventEmitter();
+      p.stdout = new EventEmitter();
+      p.stderr = new EventEmitter();
+      p.pid = 1;
+      setTimeout(() => p.emit('close', 0), 0);
+      return p;
+    };
+  }
+
+  it('refuses a non-http url without spawning the script', async () => {
+    let spawned = false;
+    setRunForTests(async () => { spawned = true; return fakeSuccess()(); });
+
+    const r = await runSetup({
+      db, dockerUser: 'u', dockerPassword: 'p', zipUrl: 'file:///etc/passwd',
+      onLine: () => {}, onStep: () => {}
+    });
+
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('bad_zip_url');
+    expect(spawned).toBe(false);
+  });
+
+  it('hands the url to the script through the environment', async () => {
+    const proj = path.join(dir, 'proj');
+    makeLayout(proj);
+    setProjectPath(db, proj);
+
+    let env: any;
+    setRunForTests(async (_cmd: string, _args: string[], opts: any) => {
+      env = opts.env;
+      return fakeSuccess()();
+    });
+
+    const r = await runSetup({
+      db, dockerUser: 'u', dockerPassword: 'p',
+      zipUrl: 'https://example.com/releases/asian-pj.zip',
+      onLine: () => {}, onStep: () => {}
+    });
+
+    expect(r.ok).toBe(true);
+    expect(env.ZIP_URL).toBe('https://example.com/releases/asian-pj.zip');
+  });
+
+  it('remembers the url for the next run', async () => {
+    const proj = path.join(dir, 'proj');
+    makeLayout(proj);
+    setProjectPath(db, proj);
+    setRunForTests(fakeSuccess());
+
+    await runSetup({
+      db, dockerUser: 'u', dockerPassword: 'p',
+      zipUrl: 'https://example.com/releases/asian-pj.zip',
+      onLine: () => {}, onStep: () => {}
+    });
+
+    expect(getConfig(db, 'zip_url')).toBe('https://example.com/releases/asian-pj.zip');
+  });
+});
+
 describe('runSetup', () => {
   it('passes secrets via env, never argv, and emits every step', async () => {
     const proj = path.join(dir, 'proj');
@@ -64,6 +142,7 @@ describe('runSetup', () => {
     const steps: string[] = [];
     const r = await runSetup({
       db, dockerUser: 'laoitdev', dockerPassword: 'sup3rSecret',
+      zipUrl: 'https://example.com/a.zip',
       onLine: () => {}, onStep: (s) => steps.push(s)
     });
 
@@ -95,6 +174,7 @@ describe('runSetup', () => {
     const lines: string[] = [];
     await runSetup({
       db, dockerUser: 'u', dockerPassword: 'sup3rSecret',
+      zipUrl: 'https://example.com/a.zip',
       onLine: (l) => lines.push(l), onStep: () => {}
     });
     for (const l of lines) expect(l).not.toContain('sup3rSecret');
@@ -118,6 +198,7 @@ describe('runSetup', () => {
     });
     const r = await runSetup({
       db, dockerUser: 'u', dockerPassword: 'p',
+      zipUrl: 'https://example.com/a.zip',
       onLine: () => {}, onStep: () => {}
     });
     expect(r.ok).toBe(false);

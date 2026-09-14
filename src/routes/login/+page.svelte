@@ -46,7 +46,7 @@
     onsubmit={submit}
   >
     <h1 class="text-lg font-semibold">Smart RFID Gate</h1>
-    <PinPad label="PIN" bind:value={pin} disabled={busy} />
+    <PinPad label="PIN" bind:value={pin} disabled={busy} autofocus />
     {#if error}<p role="alert" class="text-sm text-status-error">{error}</p>{/if}
   </form>
 </div>

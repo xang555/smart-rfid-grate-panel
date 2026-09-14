@@ -34,6 +34,32 @@ afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 const flat = (v: any) => v[''];
 
+describe('readConfig number lists', () => {
+  function writeGate(body: string): string {
+    const gateFile = path.join(dir, 'gate.toml');
+    fs.writeFileSync(gateFile, body);
+    return gateFile;
+  }
+
+  it('wraps a hand-written scalar antenna number in a list', () => {
+    const f = writeGate('[[gates]]\nant = 1\n');
+    const v: any = readConfig(f, SCHEMAS.gate);
+    expect(v.gates[0].ant).toEqual([1]);
+  });
+
+  it('keeps a real list as numbers', () => {
+    const f = writeGate('[[gates]]\nant = [1, 2]\n');
+    const v: any = readConfig(f, SCHEMAS.gate);
+    expect(v.gates[0].ant).toEqual([1, 2]);
+  });
+
+  it('drops empty and non-numeric entries rather than passing them to the form', () => {
+    const f = writeGate('[[gates]]\nant = [""]\n');
+    const v: any = readConfig(f, SCHEMAS.gate);
+    expect(v.gates[0].ant).toEqual([]);
+  });
+});
+
 describe('readConfig', () => {
   it('returns schema keys with values parsed', () => {
     const v: any = readConfig(file, SCHEMAS.reader);
@@ -138,5 +164,30 @@ describe('renderToml', () => {
     expect(back.speedway_address).toBe('192.168.55.12');
     expect(back.antennas.length).toBe(1);
     expect(back.filter.enabled).toBe(false);
+  });
+
+  // The draft carries the flat section under the key '', which is not a TOML
+  // key at all. Stringifying it directly emitted a bogus `[""]` line.
+  it('hoists the flat section instead of emitting an empty-string key', () => {
+    const f = path.join(dir, 'gate.toml');
+    fs.writeFileSync(f, '[[gates]]\ngate_id = "10001"\nant = [1, 2]\n');
+    const v: any = readConfig(f, SCHEMAS.gate);
+
+    const text = renderToml(SCHEMAS.gate, v);
+
+    expect(text).not.toContain('[""]');
+    expect(text).not.toContain('"" =');
+    expect(text).toContain('[[gates]]');
+    // flat fields belong at the top, before any table
+    expect(text.indexOf('socket_address')).toBeLessThan(text.indexOf('[[gates]]'));
+    expect((parse(text) as any).gates[0].ant).toEqual([1, 2]);
+  });
+
+  it('renders a preview the same way it renders a file', () => {
+    const f = path.join(dir, 'gate.toml');
+    fs.writeFileSync(f, '[[gates]]\ngate_id = "10001"\nant = [""]\n');
+    const v: any = readConfig(f, SCHEMAS.gate);
+    const text = renderToml(SCHEMAS.gate, v);
+    expect(text).not.toContain('[""]');
   });
 });

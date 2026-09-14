@@ -3,6 +3,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { parse, stringify } from 'smol-toml';
 import type { ConfigSchema, Field, Section } from './schema';
+import { renderToml, coerce, sectionToToml } from '$lib/toml-render';
+
+export { renderToml };
 
 type Val = Record<string, unknown>;
 
@@ -13,18 +16,33 @@ function fieldSource(section: Section, parsed: Val): Val {
   return src && typeof src === 'object' && !Array.isArray(src) ? (src as Val) : {};
 }
 
+// Number lists reach the form as a comma-separated text box, so give it numbers
+// to render: a hand-written `ant = 1` becomes [1], and junk such as [""] is
+// dropped here rather than shown in the raw TOML preview and written back.
+function numberList(value: unknown): number[] {
+  const list = Array.isArray(value) ? value : value === undefined || value === null ? [] : [value];
+  return list
+    .filter((n) => String(n).trim() !== '' && Number.isFinite(Number(n)))
+    .map(Number);
+}
+
+function normalize(f: Field, value: unknown): unknown {
+  if (f.type === 'array<number>') return numberList(value);
+  return value;
+}
+
 function sectionToValue(section: Section, parsed: Val): unknown {
   const src = fieldSource(section, parsed);
   if (section.isArray) {
     const rows = Array.isArray(parsed?.[section.key]) ? (parsed[section.key] as any[]) : [];
     return rows.map((row) => {
       const out: Val = {};
-      for (const f of section.fields) out[f.key] = row?.[f.key] ?? f.default;
+      for (const f of section.fields) out[f.key] = normalize(f, row?.[f.key] ?? f.default);
       return out;
     });
   }
   const out: Val = {};
-  for (const f of section.fields) out[f.key] = src[f.key] ?? f.default;
+  for (const f of section.fields) out[f.key] = normalize(f, src[f.key] ?? f.default);
   return out;
 }
 
@@ -95,42 +113,6 @@ export function validateConfig(
   }
   if (ctx.errors.length) return { ok: false, errors: ctx.errors };
   return { ok: true, value: raw };
-}
-
-function coerce(f: Field, value: unknown): unknown {
-  if (value === undefined || value === null) return value;
-  if (f.type === 'number') return Number(value);
-  if (f.type === 'boolean') return value === true || value === 'true';
-  if (f.type === 'array<number>') {
-    return Array.isArray(value) ? value.map((n) => Number(n)) : value;
-  }
-  return value;
-}
-
-function sectionToToml(section: Section, value: Val): unknown {
-  if (section.isArray) {
-    const rows = Array.isArray(value[section.key]) ? (value[section.key] as any[]) : [];
-    return rows.map((row) => {
-      const o: Val = {};
-      for (const f of section.fields) o[f.key] = coerce(f, row?.[f.key]);
-      return o;
-    });
-  }
-  const src = (value[section.key] ?? {}) as Val;
-  const o: Val = {};
-  for (const f of section.fields) o[f.key] = coerce(f, src[f.key]);
-  return o;
-}
-
-export function renderToml(schema: ConfigSchema, value: Val): string {
-  const doc: Val = {};
-  // Flat sections must come first: smol-toml refuses scalar keys after tables.
-  const ordered = [...schema.root].sort((a, b) => Number(!!a.key) - Number(!!b.key));
-  for (const s of ordered) {
-    if (s.key) doc[s.key] = sectionToToml(s, value) as Val;
-    else Object.assign(doc, sectionToToml(s, value) as Val);
-  }
-  return stringify(doc);
 }
 
 export function writeConfig(

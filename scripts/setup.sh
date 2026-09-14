@@ -7,6 +7,9 @@ step() { echo "@@STEP:$1:$2"; }
 
 PROJECT_PATH="${PROJECT_PATH:-$HOME/Desktop/asean-project}"
 DOCKER_USER="${DOCKER_USER:?DOCKER_USER required}"
+# Supplied by the setup screen. Quoted at use so the URL is never split or
+# re-parsed into a second command.
+ZIP_URL="${ZIP_URL:?ZIP_URL required}"
 
 step update start
 sudo apt update && sudo apt upgrade -y
@@ -22,7 +25,7 @@ step docker ok
 step download start
 mkdir -p "$PROJECT_PATH"
 cd "$PROJECT_PATH"
-curl -fL -o asian-pj.zip "https://github.com/${DOCKER_USER}/asean-project/releases/latest/download/asian-pj.zip"
+curl -fL -o asian-pj.zip "$ZIP_URL"
 step download ok
 
 step extract start

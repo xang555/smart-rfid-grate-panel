@@ -106,7 +106,7 @@ describe('POST setup/run', () => {
     const res = await POST({
       request: new Request('http://localhost/api/setup/run', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ dockerUser: 'u', dockerPassword: 'p' })
+        body: JSON.stringify({ dockerUser: 'u', dockerPassword: 'p', zipUrl: 'https://example.com/a.zip' })
       })
     } as any);
 

@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
-import { runSetup } from '$lib/server/setup';
+import { runSetup, isZipUrl } from '$lib/server/setup';
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json().catch(() => ({}));
@@ -9,6 +9,13 @@ export const POST: RequestHandler = async ({ request }) => {
   const dockerPassword = String(body?.dockerPassword ?? '');
   if (!dockerUser || !dockerPassword) {
     return json({ ok: false, message: 'Docker username and password are required' }, { status: 400 });
+  }
+  const zipUrl = String(body?.zipUrl ?? '');
+  if (!zipUrl) {
+    return json({ ok: false, message: 'Download URL is required' }, { status: 400 });
+  }
+  if (!isZipUrl(zipUrl)) {
+    return json({ ok: false, message: 'Download URL must be an http or https link' }, { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -18,7 +25,7 @@ export const POST: RequestHandler = async ({ request }) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       try {
         const result = await runSetup({
-          db: getDb(), dockerUser, dockerPassword,
+          db: getDb(), dockerUser, dockerPassword, zipUrl,
           projectPath: body?.projectPath,
           onLine: (line) => send({ type: 'line', line }),
           onStep: (step, status) => send({ type: 'step', step, status })

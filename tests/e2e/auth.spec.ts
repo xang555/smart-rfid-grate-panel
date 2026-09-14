@@ -35,6 +35,12 @@ test('wrong pin shows an error', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('Incorrect');
 });
 
+test('the pin pad takes focus so typing can start immediately', async ({ page }) => {
+  await page.goto('/login');
+  await settled(page);
+  await expect(page.getByLabel('PIN')).toBeFocused();
+});
+
 test('signing out drops the session and returns to the gate', async ({ page }) => {
   await page.goto('/login');
   await settled(page);

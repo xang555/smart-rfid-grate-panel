@@ -72,6 +72,79 @@ test('per-service control is independent and gated', async ({ page }) => {
   await expect(page.getByRole('dialog')).toContainText('IP Camera');
 });
 
+test('a gate antenna list stays a list of numbers', async ({ page }) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-proj-'));
+  fs.cpSync(FIXTURE, dir, { recursive: true });
+  await signIn(page);
+  seedProjectPath(E2E_DB_PATH, dir);
+
+  await page.goto('/settings');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Gate RFID', exact: true }).click();
+
+  // the fixture writes `ant = 1`; the field is a list, so it reads as "1"
+  const ant = page.getByLabel('Antennas');
+  await expect(ant).toHaveValue('1');
+
+  // editing it must not leak a string into the raw preview
+  await ant.fill('1, 2');
+  await page.getByRole('button', { name: /Show raw TOML/ }).click();
+  await expect(page.locator('pre')).toContainText('ant = [ 1, 2 ]');
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('a config file holding an empty antenna entry shows a clean list', async ({ page }) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-proj-'));
+  fs.cpSync(FIXTURE, dir, { recursive: true });
+  // The shipped fixture nests these keys under [reader_link]/[mqtt]/[behaviour],
+  // but the gate schema reads them flat — the real rfid config is flat and the
+  // fixture is stale. Write a valid one so the save path is what fails, if
+  // anything does. `ant = [""]` stands in for a blank list entry written by an
+  // older save.
+  const gateCfg = path.join(dir, 'rfid', 'config', 'config.toml');
+  fs.writeFileSync(gateCfg, `socket_address = "localhost"
+socket_port = 11000
+tx_power = 17
+receiver_sensitivity_index = 2
+mqtt_broker_address = "tcp://localhost:1883"
+mqtt_user = "gate"
+mqtt_passwd = "changeme"
+cleanup_interval = 5
+report_every_n_tags = 1
+search_mode = 2
+tag_timeout = 10
+tag_population = 20
+event_id = 10001
+
+[[gates]]
+gate_id = "10001"
+ant = [""]
+ipcame_gateway_address = "localhost"
+ipcame_port = 5555
+camera_id = 1
+`);
+
+  await signIn(page);
+  seedProjectPath(E2E_DB_PATH, dir);
+
+  await page.goto('/settings');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Gate RFID', exact: true }).click();
+  await page.getByRole('button', { name: /Show raw TOML/ }).click();
+
+  const pre = page.locator('pre');
+  await expect(pre).not.toContainText('[""]');
+  await expect(pre).toContainText('ant = []');
+
+  // and a save rewrites the file without the blank entry
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
+  expect(fs.readFileSync(gateCfg, 'utf8')).toContain('ant = []');
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 test('stopping asks for confirmation and cancel is inert', async ({ page }) => {
   await signIn(page);
   await page.goto('/');

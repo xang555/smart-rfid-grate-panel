@@ -8,6 +8,7 @@ export const load: PageServerLoad = async () => {
   return {
     projectPath,
     installed: checkLayout(projectPath).ok,
-    savedDockerUser: getConfig(db, 'docker_user') ?? ''
+    savedDockerUser: getConfig(db, 'docker_user') ?? '',
+    savedZipUrl: getConfig(db, 'zip_url') ?? ''
   };
 };

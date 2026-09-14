@@ -25,15 +25,36 @@ export interface RunSetupOpts {
   db: Database.Database;
   dockerUser: string;
   dockerPassword: string;
+  zipUrl: string;
   projectPath?: string;
   onLine: (line: string) => void;
   onStep: (step: SetupStep, status: 'start' | 'ok' | 'fail') => void;
+}
+
+// The archive URL is handed to a shell script. Restricting it to http(s) keeps
+// `file:` and friends out — the value still reaches curl quoted, never as a
+// bare word, so it cannot be split or re-parsed into a second command.
+export function isZipUrl(value: string): boolean {
+  if (!value) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+  return parsed.protocol === 'http:' || parsed.protocol === 'https:';
 }
 
 export async function runSetup(opts: RunSetupOpts): Promise<ActionResult> {
   const { db } = opts;
   const projectPath = opts.projectPath ? path.resolve(opts.projectPath) : getProjectPath(db);
   const script = path.resolve('scripts/setup.sh');
+
+  if (!isZipUrl(opts.zipUrl)) {
+    const msg = 'Download URL must be an http or https link';
+    pushLog({ service: 'setup', level: 'error', message: msg, detail: opts.zipUrl });
+    return { ok: false, code: 'bad_zip_url', message: msg, detail: opts.zipUrl };
+  }
 
   if (!fs.existsSync(script)) {
     const msg = 'Setup script not found';
@@ -53,6 +74,7 @@ export async function runSetup(opts: RunSetupOpts): Promise<ActionResult> {
       PROJECT_PATH: projectPath,
       DOCKER_USER: opts.dockerUser,
       DOCKER_PASSWORD: opts.dockerPassword,
+      ZIP_URL: opts.zipUrl,
       SETUP_STEPS: SETUP_STEPS.join(',')
     },
     stdio: ['ignore', 'pipe', 'pipe']
@@ -108,6 +130,7 @@ export async function runSetup(opts: RunSetupOpts): Promise<ActionResult> {
 
   setProjectPath(db, projectPath);
   setConfig(db, 'docker_user', opts.dockerUser);
+  setConfig(db, 'zip_url', opts.zipUrl);
   const check = checkLayout(projectPath);
   if (!check.ok) {
     const msg = 'Setup finished but the project layout is incomplete';

@@ -19,6 +19,9 @@
   // svelte-ignore state_referenced_locally
   let dockerUser = $state(data.savedDockerUser);
   let dockerPassword = $state('');
+  // where the installer fetches the project archive from
+  // svelte-ignore state_referenced_locally
+  let zipUrl = $state(data.savedZipUrl);
   // svelte-ignore state_referenced_locally
   let projectPath = $state(data.projectPath);
   let steps = $state<Record<string, StepState>>(
@@ -33,14 +36,21 @@
 
   async function run() {
     if (!dockerUser || !dockerPassword) { resultMsg = 'Docker username and password are required.'; return; }
+    if (!zipUrl) { resultMsg = 'A download URL for the project archive is required.'; return; }
     running = true; resultMsg = ''; lines = [];
     steps = Object.fromEntries(STEPS.map((s) => [s.key, 'idle']));
 
     try {
       const res = await fetch('/api/setup/run', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ dockerUser, dockerPassword, projectPath })
+        body: JSON.stringify({ dockerUser, dockerPassword, zipUrl, projectPath })
       });
+      if (!res.ok) {
+        // the endpoint refuses a bad URL before it ever spawns the script
+        const body = await res.json().catch(() => ({}));
+        resultMsg = body.message ?? 'Setup could not start.';
+        return;
+      }
       if (!res.body) { resultMsg = 'Setup could not start.'; return; }
 
       const reader = res.body.getReader();
@@ -98,6 +108,14 @@
           <span class="text-xs text-ink-soft">Sent to the installer as an environment variable, never shown in the log.</span>
         </label>
       </div>
+      <label class="block">
+        <span class="block text-sm font-medium mb-1">Download URL</span>
+        <input bind:value={zipUrl} type="url" inputmode="url" placeholder="https://example.com/releases/asian-pj.zip"
+          class="mono w-full rounded-md border border-hairline px-3 py-2" />
+        <span class="text-xs text-ink-soft">
+          Link to the project .zip the installer downloads and extracts. Must be http or https.
+        </span>
+      </label>
       <label class="block">
         <span class="block text-sm font-medium mb-1">Install path</span>
         <input bind:value={projectPath} class="mono w-full rounded-md border border-hairline px-3 py-2" />
