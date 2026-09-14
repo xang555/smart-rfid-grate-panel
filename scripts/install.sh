@@ -23,8 +23,13 @@ die() { echo "[install] error: $*" >&2; exit 1; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) TARBALL_URL="$2"; shift 2 ;;
-    --port) PORT="$2"; shift 2 ;;
+    --url)
+      [[ -n "${2:-}" ]] || die "--url requires a value"
+      TARBALL_URL="$2"; shift 2 ;;
+    --port)
+      [[ -n "${2:-}" ]] || die "--port requires a value"
+      [[ "$2" =~ ^[0-9]+$ ]] || die "--port must be a number"
+      PORT="$2"; shift 2 ;;
     --no-service) NO_SERVICE=1; shift ;;
     --help|-h)
       grep '^# ' "$0" | sed 's/^# \{0,1\}//'
@@ -40,6 +45,12 @@ else
   SUDO="sudo"
   INVOKING_USER="$(id -un)"
 fi
+  # The unit must carry the invoking user's home, not root's leaked via sudo.
+  if command -v getent >/dev/null 2>&1; then
+    INVOKING_HOME="$(getent passwd "$INVOKING_USER" | cut -d: -f6)"
+  else
+    INVOKING_HOME="$(eval echo "~$INVOKING_USER")"
+  fi
 
 # --- prerequisites ---------------------------------------------------------
 if ! command -v curl >/dev/null 2>&1; then
@@ -84,7 +95,11 @@ if [[ -z "$SHA256_FILE" && -f "$TARBALL.sha256" ]]; then
 fi
 if [[ -n "$SHA256_FILE" ]]; then
   log "verifying checksum"
-  echo "$(awk '{print $1}' "$SHA256_FILE")  $TARBALL" | sha256sum -c - \
+  # sha256sum -c exits 0 even on malformed input, so the hash itself must be
+  # validated before use, and - --strict rejects anything half-formed.
+  hash="$(awk '{print $1}' "$SHA256_FILE")"
+  [[ "$hash" =~ ^[0-9a-f]{64}$ ]] || die "invalid checksum file: $SHA256_FILE"
+  echo "$hash  $TARBALL" | sha256sum -c - --strict \
     || die "checksum mismatch for $TARBALL"
 else
   log "WARNING: no .sha256 found next to tarball, skipping verification"
@@ -98,7 +113,8 @@ if command -v node >/dev/null 2>&1; then
 fi
 if [[ "$need_node" -eq 1 ]]; then
   log "installing Node 22 (NodeSource)"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | $SUDO -E bash -
+  # No -E: when already root, $SUDO is empty and "-E bash -" is not a command.
+  curl -fsSL https://deb.nodesource.com/setup_22.x | $SUDO bash -
   $SUDO apt-get install -y nodejs
 fi
 NODE_BIN="$(command -v node)"
@@ -117,16 +133,24 @@ if [[ -f "$APP_DIR/data/app.db" && ! -f "$DATA_DIR/app.db" ]]; then
   $SUDO mkdir -p "$DATA_DIR"
   $SUDO chown -R "$INVOKING_USER" "$DATA_DIR"
   $SUDO mv "$APP_DIR/data/app.db" "$DATA_DIR/app.db"
+  [[ -f "$APP_DIR/data/app.db-wal" ]] && $SUDO mv "$APP_DIR/data/app.db-wal" "$DATA_DIR/app.db-wal"
+  [[ -f "$APP_DIR/data/app.db-shm" ]] && $SUDO mv "$APP_DIR/data/app.db-shm" "$DATA_DIR/app.db-shm"
 fi
 
-# --- swap app dir (temp extract + mv) ---------------------------------------
-TMP_EXTRACT="$(mktemp -d /tmp/smart-rfid-gate-app-XXXXXX)"
-tar -xzf "$TARBALL" -C "$TMP_EXTRACT"
-$SUDO mkdir -p "$APP_DIR"
-$SUDO find "$APP_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-$SUDO cp -a "$TMP_EXTRACT/." "$APP_DIR/"
-$SUDO chown -R "$INVOKING_USER" "$APP_DIR"
-rm -rf "$TMP_EXTRACT"
+# --- swap app dir (atomic rename, /opt and .new share a filesystem) ---------
+$SUDO mkdir -p "${APP_DIR}.new"
+$SUDO chown "$INVOKING_USER" "${APP_DIR}.new"  # tar runs as the invoking user
+tar -xzf "$TARBALL" -C "${APP_DIR}.new"
+$SUDO chown -R "$INVOKING_USER" "${APP_DIR}.new"
+if [[ -d "$APP_DIR" ]]; then
+  $SUDO mv "$APP_DIR" "${APP_DIR}.old"
+fi
+if $SUDO mv "${APP_DIR}.new" "$APP_DIR"; then
+  $SUDO rm -rf "${APP_DIR}.old"
+else
+  [[ -d "${APP_DIR}.old" ]] && $SUDO mv "${APP_DIR}.old" "$APP_DIR"
+  die "install swap failed"
+fi
 
 # --- data dir ----------------------------------------------------------------
 $SUDO mkdir -p "$DATA_DIR"
@@ -159,7 +183,7 @@ EOF
     fi
     cat <<EOF
 WorkingDirectory=$APP_DIR
-Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$HOME"
+Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME"
 ExecStart=$NODE_BIN $APP_DIR/build
 Restart=always
 RestartSec=3
@@ -169,7 +193,9 @@ WantedBy=multi-user.target
 EOF
   } | $SUDO tee "$UNIT" >/dev/null
   $SUDO systemctl daemon-reload
-  $SUDO systemctl enable --now "$SERVICE"
+  # || true so a failed start still reaches the health-check loop below and
+  # its journalctl hint instead of dying here with no pointer to the logs.
+  $SUDO systemctl enable --now "$SERVICE" || true
 
   # --- health check ----------------------------------------------------------
   log "waiting for panel on port $PORT"
@@ -184,7 +210,9 @@ EOF
     exit 1
   fi
 
-  LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  # || true keeps the assignment safe under pipefail when hostname -I is
+  # unavailable (non-Linux hosts).
+  LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || true
   log "panel running: http://${LAN_IP:-<box-ip>}:$PORT"
 else
   log "--no-service: app extracted to $APP_DIR"
