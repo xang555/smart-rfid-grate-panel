@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { goto } from '$app/navigation';
 
   let {
     title,
@@ -10,6 +11,21 @@
     active?: 'status' | 'setup' | 'settings' | null;
     children: Snippet;
   } = $props();
+
+  let signingOut = $state(false);
+
+  // The endpoint drops the session row and the sid cookie; leaving the page is
+  // ours to do, and the layout guard has nothing left to honour.
+  async function signOut() {
+    if (signingOut) return;
+    signingOut = true;
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      signingOut = false;
+      await goto('/login');
+    }
+  }
 
   const nav = [
     { href: '/', key: 'status', label: 'Status' },
@@ -31,6 +47,12 @@
       {/each}
     </nav>
     <div class="ml-auto text-sm text-chrome-ink/80">{title}</div>
+    <button
+      type="button"
+      disabled={signingOut}
+      onclick={signOut}
+      class="text-sm px-3 py-1.5 rounded-md text-chrome-ink/70 hover:text-white hover:bg-white/10 disabled:opacity-50"
+    >Sign out</button>
   </header>
   <main class="flex-1 min-h-0">
     {@render children()}

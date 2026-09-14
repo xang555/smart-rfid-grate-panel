@@ -37,9 +37,12 @@ function seedProjectPath(dbPath: string, projectPath: string) {
 test('settings edits persist to the toml file', async ({ page }) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-proj-'));
   fs.cpSync(FIXTURE, dir, { recursive: true });
-  seedProjectPath(E2E_DB_PATH, dir);
 
+  // Sign in first: the throwaway DB is created and migrated lazily on the
+  // server's first touch, so seeding it any earlier has no schema to insert
+  // into.
   await signIn(page);
+  seedProjectPath(E2E_DB_PATH, dir);
   await page.goto('/settings');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Reader', exact: true }).click();
@@ -67,4 +70,21 @@ test('per-service control is independent and gated', async ({ page }) => {
   await rows.nth(2).getByRole('button', { name: 'Start' }).click();
   await expect(page.getByRole('dialog')).toContainText('Reader');
   await expect(page.getByRole('dialog')).toContainText('IP Camera');
+});
+
+test('stopping asks for confirmation and cancel is inert', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // STOP ALL opens the dialog rather than firing on the click
+  await page.getByRole('button', { name: 'STOP ALL' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Stop all services?');
+
+  // Cancel dismisses it and leaves every row where it was
+  const before = await page.locator('[data-service-row]').allInnerTexts();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(await page.locator('[data-service-row]').allInnerTexts()).toEqual(before);
 });

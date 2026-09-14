@@ -7,6 +7,7 @@
   import ServiceRow from '$lib/components/ServiceRow.svelte';
   import LogConsole from '$lib/components/LogConsole.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { isOn } from '$lib/components/service-logic';
 
   let { data }: { data: PageData } = $props();
 
@@ -15,6 +16,21 @@
   let services = $state<ServiceStatus[]>(data.services);
   let busy = $state(false);
   let conflict = $state<{ service: ServiceStatus; missing: string[] } | null>(null);
+
+  type StopTarget = { kind: 'one'; service: ServiceStatus } | { kind: 'all' };
+  let pendingStop = $state<StopTarget | null>(null);
+
+  const stopTitle = $derived(
+    pendingStop === null ? ''
+      : pendingStop.kind === 'all' ? 'Stop all services?'
+      : `Stop ${pendingStop.service.label}?`
+  );
+  const stopBody = $derived(
+    pendingStop === null ? ''
+      : pendingStop.kind === 'all'
+        ? 'Services stop in reverse order: Gate RFID, then IP Camera, then Reader.'
+        : `${pendingStop.service.label} will be shut down.`
+  );
 
   const DEP_LABELS: Record<string, string> = { reader: 'Reader', ipcame: 'IP Camera', rfid: 'Gate RFID' };
   const DEPS: Record<string, string[]> = { reader: [], ipcame: [], rfid: ['reader', 'ipcame'] };
@@ -45,8 +61,8 @@
   }
 
   async function toggle(s: ServiceStatus) {
-    if (s.actual === 'running' || s.actual === 'pulling' || s.actual === 'starting') {
-      await post(`/api/services/${s.name}/stop`);
+    if (isOn(s.actual)) {
+      pendingStop = { kind: 'one', service: s };
       return;
     }
     const r = await post(`/api/services/${s.name}/start`);
@@ -60,7 +76,15 @@
   }
 
   async function startAll() { await post('/api/services/start-all'); }
-  async function stopAll() { await post('/api/services/stop-all'); }
+
+  async function confirmStop() {
+    const target = pendingStop;
+    pendingStop = null;
+    if (!target) return;
+    await post(
+      target.kind === 'all' ? '/api/services/stop-all' : `/api/services/${target.service.name}/stop`
+    );
+  }
 
   async function confirmForce() {
     const c = conflict;
@@ -84,7 +108,7 @@
       <div class="flex items-center gap-3">
         <button type="button" disabled={busy} onclick={startAll}
           class="px-5 py-2.5 rounded-md bg-status-ok text-white font-medium disabled:opacity-50">START ALL</button>
-        <button type="button" disabled={busy} onclick={stopAll}
+        <button type="button" disabled={busy} onclick={() => (pendingStop = { kind: 'all' })}
           class="px-5 py-2.5 rounded-md bg-status-error text-white font-medium disabled:opacity-50">STOP ALL</button>
         <span class="text-xs text-ink-soft">
           Start order: 1 Reader → 2 IP Camera → 3 Gate RFID. Stop runs in reverse.
@@ -112,5 +136,14 @@
     confirmLabel="Start anyway"
     onconfirm={confirmForce}
     oncancel={() => (conflict = null)}
+  />
+
+  <ConfirmDialog
+    open={pendingStop !== null}
+    title={stopTitle}
+    body={stopBody}
+    confirmLabel="Stop"
+    onconfirm={confirmStop}
+    oncancel={() => (pendingStop = null)}
   />
 </AppShell>

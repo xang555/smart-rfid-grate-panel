@@ -34,3 +34,17 @@ test('wrong pin shows an error', async ({ page }) => {
   await page.getByLabel('PIN').fill('000000');
   await expect(page.getByRole('alert')).toContainText('Incorrect');
 });
+
+test('signing out drops the session and returns to the gate', async ({ page }) => {
+  await page.goto('/login');
+  await settled(page);
+  await page.getByLabel('PIN').fill('135790');
+  await expect(page).toHaveURL('http://localhost:5273/');
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  // the session is gone, so the guarded screen bounces back out
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/login$/);
+});

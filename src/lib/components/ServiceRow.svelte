@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ServiceStatus } from '$lib/server/services/types';
+  import { isOn as isServiceOn } from '$lib/components/service-logic';
 
   let {
     service,
@@ -23,9 +24,7 @@
   };
   // A pulling service counts as on: the toggle must offer Stop, and docker
   // compose down is safe mid-pull.
-  const isOn = $derived(
-    service.actual === 'running' || service.actual === 'pulling' || service.actual === 'starting'
-  );
+  const isOn = $derived(isServiceOn(service.actual));
   const transitioning = $derived(
     service.actual === 'pulling' || service.actual === 'starting' || service.actual === 'stopping'
   );
