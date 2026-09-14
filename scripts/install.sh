@@ -111,6 +111,14 @@ if [[ "$NO_SERVICE" -eq 0 ]] && systemctl list-unit-files | grep -q "^$SERVICE";
   $SUDO systemctl disable "$SERVICE" 2>/dev/null || true
 fi
 
+# --- migrate old DB (before the app-dir wipe destroys it) -------------------
+if [[ -f "$APP_DIR/data/app.db" && ! -f "$DATA_DIR/app.db" ]]; then
+  log "migrating old app.db into $DATA_DIR"
+  $SUDO mkdir -p "$DATA_DIR"
+  $SUDO chown -R "$INVOKING_USER" "$DATA_DIR"
+  $SUDO mv "$APP_DIR/data/app.db" "$DATA_DIR/app.db"
+fi
+
 # --- swap app dir (temp extract + mv) ---------------------------------------
 TMP_EXTRACT="$(mktemp -d /tmp/smart-rfid-gate-app-XXXXXX)"
 tar -xzf "$TARBALL" -C "$TMP_EXTRACT"
@@ -120,13 +128,9 @@ $SUDO cp -a "$TMP_EXTRACT/." "$APP_DIR/"
 $SUDO chown -R "$INVOKING_USER" "$APP_DIR"
 rm -rf "$TMP_EXTRACT"
 
-# --- data dir + migrate old DB ----------------------------------------------
+# --- data dir ----------------------------------------------------------------
 $SUDO mkdir -p "$DATA_DIR"
 $SUDO chown -R "$INVOKING_USER" "$DATA_DIR"
-if [[ -f "$APP_DIR/data/app.db" && ! -f "$DATA_DIR/app.db" ]]; then
-  log "migrating old app.db into $DATA_DIR"
-  mv "$APP_DIR/data/app.db" "$DATA_DIR/app.db"
-fi
 
 # --- cleanup temp tarball ----------------------------------------------------
 case "$TARBALL" in /tmp/*) rm -f "$TARBALL" "$TARBALL.sha256" 2>/dev/null || true ;; esac
