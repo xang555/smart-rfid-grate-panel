@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import PinPad from '$lib/components/PinPad.svelte';
+  import { isValidPin } from '$lib/components/pin-logic';
 
   let pin = $state('');
   let confirm = $state('');
@@ -10,7 +11,7 @@
   async function submit(e: SubmitEvent) {
     e.preventDefault();
     error = '';
-    if (!/^\d{6,12}$/.test(pin)) { error = 'Use 6 to 12 digits.'; return; }
+    if (!isValidPin(pin)) { error = 'Use exactly 6 digits.'; return; }
     if (pin !== confirm) { error = 'The two PINs do not match.'; return; }
     busy = true;
     try {
@@ -34,10 +35,10 @@
   >
     <div>
       <h1 class="text-lg font-semibold">Create the panel PIN</h1>
-      <p class="text-sm text-ink-soft mt-1">6 to 12 digits. Wrong entries lock this device for 15 minutes after 5 tries.</p>
+      <p class="text-sm text-ink-soft mt-1">Exactly 6 digits. Wrong entries lock this device for 15 minutes after 5 tries.</p>
     </div>
-    <PinPad label="PIN" minlength={6} maxlength={12} bind:value={pin} autocomplete="new-password" disabled={busy} />
-    <PinPad label="Confirm PIN" minlength={6} maxlength={12} bind:value={confirm} autocomplete="new-password" disabled={busy} />
+    <PinPad label="PIN" bind:value={pin} autocomplete="new-password" disabled={busy} />
+    <PinPad label="Confirm PIN" bind:value={confirm} autocomplete="new-password" disabled={busy} />
     {#if error}<p role="alert" class="text-sm text-status-error">{error}</p>{/if}
     <button
       type="submit" disabled={busy}

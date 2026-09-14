@@ -22,15 +22,15 @@ test('after a pin exists, setup-pin bounces to login and signing in works', asyn
   await settled(page);
   // the hook bounces us to /login once a pin exists and we are signed out
   await expect(page).toHaveURL(/\/login$/);
+  // the sixth digit submits on its own: there is no button to press
   await page.getByLabel('PIN').fill('135790');
-  await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('http://localhost:5273/');
 });
 
 test('wrong pin shows an error', async ({ page }) => {
   await page.goto('/login');
   await settled(page);
+  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0);
   await page.getByLabel('PIN').fill('000000');
-  await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('alert')).toContainText('Incorrect');
 });

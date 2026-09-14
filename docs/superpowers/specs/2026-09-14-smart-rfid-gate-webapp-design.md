@@ -205,8 +205,8 @@ Migrations are numbered and run on boot, tracked in a `schema_version` table.
 ## 7. Auth & security
 
 - **First run.** If no `pin` row exists, every route redirects to `/setup-pin`.
-  That route refuses to render once a PIN exists (404). PIN is 6–12 digits,
-  confirmed by a second field.
+  That route refuses to render once a PIN exists (404). PIN is exactly 6
+  digits, confirmed by a second field.
 - **Hashing.** `crypto.scryptSync(pin, salt, 64, { N: 16384, r: 8, p: 1 })`,
   16-byte random salt per PIN, cost params stored in `params`. Verify with
   `crypto.timingSafeEqual`.
@@ -476,7 +476,7 @@ same values the source file documented.
 ## 10. Screens
 
 1. **`/setup-pin`** — first run only. Centered card, PIN pad, two entries
-   (enter + confirm), 6–12 digits, note that 5 wrong tries locks for 15 min.
+   (enter + confirm), exactly 6 digits, note that 5 wrong tries locks for 15 min.
    Submit creates the PIN and logs in.
 2. **`/login`** — same centered card, PIN pad. Shows lockout state and minutes
    remaining when rate-limited.

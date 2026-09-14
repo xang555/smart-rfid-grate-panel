@@ -1,15 +1,16 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import PinPad from '$lib/components/PinPad.svelte';
+  import { isValidPin } from '$lib/components/pin-logic';
 
   let pin = $state('');
   let error = $state('');
   let busy = $state(false);
 
-  async function submit(e: SubmitEvent) {
-    e.preventDefault();
+  async function submit(e?: SubmitEvent) {
+    e?.preventDefault();
+    if (busy || !isValidPin(pin)) return;
     error = '';
-    if (!/^\d{6,12}$/.test(pin)) { error = 'Enter your PIN.'; return; }
     busy = true;
     try {
       const res = await fetch('/api/auth/login', {
@@ -25,9 +26,18 @@
         error = 'Incorrect PIN.';
       }
     } finally {
+      // Clear the pad after a failure so the next attempt starts fresh — and so
+      // the effect below does not fire again on the value we just rejected.
+      pin = '';
       busy = false;
     }
   }
+
+  // No button to press: the sixth digit is the submit. Enter still works for
+  // anyone with a keyboard, since the fields live in a form.
+  $effect(() => {
+    if (!busy && isValidPin(pin)) submit();
+  });
 </script>
 
 <div class="min-h-screen grid place-items-center p-6">
@@ -38,9 +48,5 @@
     <h1 class="text-lg font-semibold">Smart RFID Gate</h1>
     <PinPad label="PIN" bind:value={pin} disabled={busy} />
     {#if error}<p role="alert" class="text-sm text-status-error">{error}</p>{/if}
-    <button
-      type="submit" disabled={busy}
-      class="w-full rounded-md bg-accent text-white py-2 font-medium disabled:opacity-50"
-    >Sign in</button>
   </form>
 </div>

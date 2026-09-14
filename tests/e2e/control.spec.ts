@@ -3,17 +3,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { E2E_DB_PATH } from './e2e-db';
 
 const FIXTURE = path.resolve('tests/fixtures/fake-project');
 
 // Serial by config (workers: 1). auth.spec runs first and creates the panel
-// PIN; these tests sign in with it. The dev DB's project_path is pointed at a
+// PIN; these tests sign in with it. The project_path is pointed at a
 // disposable copy of the fixture so writes never touch real config.
 async function signIn(page: import('@playwright/test').Page) {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
+  // no submit button: the sixth digit signs in on its own
   await page.getByLabel('PIN').fill('135790');
-  await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('http://localhost:5273/');
 }
 
@@ -36,7 +37,7 @@ function seedProjectPath(dbPath: string, projectPath: string) {
 test('settings edits persist to the toml file', async ({ page }) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-proj-'));
   fs.cpSync(FIXTURE, dir, { recursive: true });
-  seedProjectPath(path.join(process.cwd(), 'data', 'app.db'), dir);
+  seedProjectPath(E2E_DB_PATH, dir);
 
   await signIn(page);
   await page.goto('/settings');

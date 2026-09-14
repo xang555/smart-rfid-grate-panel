@@ -5,7 +5,7 @@ import path from 'node:path';
 import { openDb } from '../../src/lib/server/db';
 import {
   hasPin, createPin, verifyPin, createSession, validateSession,
-  destroySession, cleanupExpired, SESSION_TTL_MS, LOCKOUT_MS
+  destroySession, cleanupExpired, SESSION_TTL_MS, LOCKOUT_MS, PIN_MIN, PIN_MAX
 } from '../../src/lib/server/auth';
 
 let db: any, dir: string;
@@ -29,6 +29,15 @@ describe('pin', () => {
     expect(() => createPin(db, 'abcdef')).toThrow('bad_pin');
     expect(() => createPin(db, '12345')).toThrow('bad_pin');
     expect(() => createPin(db, '1234567890123')).toThrow('bad_pin');
+  });
+
+  it('takes exactly six digits, no more and no less', () => {
+    expect(PIN_MIN).toBe(6);
+    expect(PIN_MAX).toBe(6);
+    expect(() => createPin(db, '1234567')).toThrow('bad_pin');
+    expect(() => createPin(db, '12345678')).toThrow('bad_pin');
+    createPin(db, '123456');
+    expect(hasPin(db)).toBe(true);
   });
 
   it('refuses to overwrite an existing pin', () => {

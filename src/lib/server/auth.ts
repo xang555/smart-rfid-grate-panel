@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import type Database from 'better-sqlite3';
 
 export const PIN_MIN = 6;
-export const PIN_MAX = 12;
+export const PIN_MAX = 6;
+export const PIN_RE = new RegExp(`^\\d{${PIN_MIN},${PIN_MAX}}$`);
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 export const MAX_ATTEMPTS = 5;
 export const WINDOW_MS = 15 * 60 * 1000;
@@ -21,7 +22,7 @@ export function hasPin(db: Database.Database): boolean {
 
 export function createPin(db: Database.Database, pin: string): void {
   if (hasPin(db)) throw new Error('pin_exists');
-  if (!/^\d{6,12}$/.test(pin)) throw new Error('bad_pin');
+  if (!PIN_RE.test(pin)) throw new Error('bad_pin');
   const salt = crypto.randomBytes(16);
   const hash = hashPin(pin, salt);
   db.prepare(

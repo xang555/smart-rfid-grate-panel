@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     createPin(db, pin);
   } catch (err: any) {
-    if (err?.message === 'bad_pin') throw error(400, 'PIN must be 6 to 12 digits');
+    if (err?.message === 'bad_pin') throw error(400, 'PIN must be exactly 6 digits');
     throw error(500, 'Could not create PIN');
   }
   const { id } = createSession(db);
