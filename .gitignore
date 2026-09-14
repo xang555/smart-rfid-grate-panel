@@ -27,6 +27,9 @@ vite.config.ts.timestamp-*
 /test-results
 /playwright-report
 
+# Release artifacts
+/dist
+
 # Local planning scratch
 /CLAUDE.local.md
 
