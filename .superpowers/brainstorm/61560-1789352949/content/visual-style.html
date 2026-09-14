@@ -1,0 +1,165 @@
+  <h2>Pick a design direction</h2>
+  <p class="subtitle">Main control screen — the START/STOP + live log view. Which feels right for a gate operator at a checkpoint?</p>
+
+  <div class="cards">
+
+    <!-- ============ A : INDUSTRIAL DARK ============ -->
+    <div class="card" data-choice="a" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#0b0f14;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:10px;color:#cbd5e1;">
+
+          <!-- top bar -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #1e293b;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:14px;height:14px;border-radius:3px;background:#f59e0b;"></div>
+              <b style="font-size:11px;color:#f8fafc;">SMART RFID GATE</b>
+            </div>
+            <div style="display:flex;gap:8px;font-size:9px;color:#64748b;">
+              <span>Status</span><span>Setup</span><span>Settings</span>
+            </div>
+          </div>
+
+          <!-- service cards -->
+          <div style="display:flex;gap:6px;padding:10px 12px 6px;">
+            <div style="flex:1;background:#111827;border:1px solid #1f2937;border-left:3px solid #22c55e;border-radius:6px;padding:7px 8px;">
+              <div style="font-size:8px;color:#94a3b8;letter-spacing:.5px;">R E A D E R</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;"></span>
+                <b style="font-size:10px;color:#22c55e;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#64748b;margin-top:2px;">pid 4821 · 00:14:07</div>
+            </div>
+            <div style="flex:1;background:#111827;border:1px solid #1f2937;border-left:3px solid #22c55e;border-radius:6px;padding:7px 8px;">
+              <div style="font-size:8px;color:#94a3b8;letter-spacing:.5px;">I P C A M E</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;"></span>
+                <b style="font-size:10px;color:#22c55e;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#64748b;margin-top:2px;">container · :5555</div>
+            </div>
+            <div style="flex:1;background:#111827;border:1px solid #1f2937;border-left:3px solid #ef4444;border-radius:6px;padding:7px 8px;">
+              <div style="font-size:8px;color:#94a3b8;letter-spacing:.5px;">G A T E &nbsp; R F I D</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></span>
+                <b style="font-size:10px;color:#ef4444;">ERROR</b>
+              </div>
+              <div style="font-size:8px;color:#64748b;margin-top:2px;">mqtt refused connect</div>
+            </div>
+          </div>
+
+          <!-- buttons -->
+          <div style="display:flex;gap:8px;padding:4px 12px 8px;">
+            <div style="flex:2;background:#166534;border:1px solid #22c55e;border-radius:6px;text-align:center;padding:7px;color:#dcfce7;font-weight:700;font-size:10px;letter-spacing:1px;">▶ START</div>
+            <div style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:6px;text-align:center;padding:7px;color:#64748b;font-weight:700;font-size:10px;letter-spacing:1px;">■ STOP</div>
+          </div>
+
+          <!-- log -->
+          <div style="margin:0 12px 12px;background:#020617;border:1px solid #1e293b;border-radius:6px;padding:7px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5px;line-height:1.6;">
+            <div style="display:flex;justify-content:space-between;color:#475569;margin-bottom:3px;"><span>LIVE LOG</span><span>● streaming</span></div>
+            <div style="color:#64748b;">14:02:11 <span style="color:#38bdf8;">[reader]</span> socket listening :11000</div>
+            <div style="color:#22c55e;">14:02:12 <span style="color:#38bdf8;">[ipcame]</span> container up (5555)</div>
+            <div style="color:#f59e0b;">14:02:15 <span style="color:#38bdf8;">[rfid]</span> connecting mqtt 192.168.55.148…</div>
+            <div style="color:#ef4444;">14:02:20 <span style="color:#38bdf8;">[rfid]</span> ERROR connection refused ▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A · Industrial Dark</h3>
+        <p>Dark slate panel, glowing status LEDs, green/amber/red semantics, monospace log. Reads like machine HMI. Best for a dim checkpoint, long shifts, glanceable state.</p>
+      </div>
+    </div>
+
+    <!-- ============ B : CLEAN OPS ============ -->
+    <div class="card" data-choice="b" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#f1f5f9;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:10px;color:#0f172a;">
+
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fff;border-bottom:1px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></div>
+              <b style="font-size:11px;">Smart RFID Gate</b>
+            </div>
+            <div style="display:flex;gap:10px;font-size:9px;color:#64748b;">
+              <span style="color:#4f46e5;font-weight:600;">Control</span><span>Setup</span><span>Settings</span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;padding:10px 12px 6px;">
+            <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+              <div style="font-size:9px;color:#64748b;">Reader</div>
+              <div style="font-size:11px;font-weight:700;color:#16a34a;margin-top:2px;">● Running</div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:3px;">14m uptime</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+              <div style="font-size:9px;color:#64748b;">IP Camera</div>
+              <div style="font-size:11px;font-weight:700;color:#16a34a;margin-top:2px;">● Running</div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:3px;">port 5555</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #fecaca;border-radius:8px;padding:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+              <div style="font-size:9px;color:#64748b;">Gate RFID</div>
+              <div style="font-size:11px;font-weight:700;color:#dc2626;margin-top:2px;">● Error</div>
+              <div style="font-size:8px;color:#dc2626;margin-top:3px;">mqtt refused</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;padding:6px 12px 8px;">
+            <div style="flex:2;background:#4f46e5;border-radius:8px;text-align:center;padding:7px;color:#fff;font-weight:700;font-size:10px;box-shadow:0 1px 2px rgba(79,70,229,.35);">Start Services</div>
+            <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;text-align:center;padding:7px;color:#94a3b8;font-weight:600;font-size:10px;">Stop</div>
+          </div>
+
+          <div style="margin:0 12px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5px;line-height:1.7;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+            <div style="color:#94a3b8;margin-bottom:3px;">Logs</div>
+            <div style="color:#475569;">14:02:11 [reader] socket listening :11000</div>
+            <div style="color:#16a34a;">14:02:12 [ipcame] container up (5555)</div>
+            <div style="color:#dc2626;">14:02:20 [rfid] connection refused</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>B · Clean Ops</h3>
+        <p>Light, airy, card-based SaaS look. Familiar and approachable, good in bright daylight. Less "machine", more "admin tool".</p>
+      </div>
+    </div>
+
+    <!-- ============ C : CONSOLE-FIRST ============ -->
+    <div class="card" data-choice="c" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#0a0a0a;padding:0;">
+        <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#d1fae5;">
+
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #14532d;">
+            <b style="font-size:11px;color:#4ade80;">◆ smart-rfid-gate</b>
+            <div style="display:flex;gap:10px;font-size:9px;color:#166534;"><span style="color:#4ade80;">[control]</span><span>[setup]</span><span>[settings]</span></div>
+          </div>
+
+          <!-- status row -->
+          <div style="padding:9px 12px;font-size:9.5px;line-height:1.8;border-bottom:1px solid #14532d;">
+            <div><span style="color:#4ade80;">✓</span> reader&nbsp;&nbsp;&nbsp;<span style="color:#4ade80;">RUNNING</span> <span style="color:#166534;">pid=4821 00:14:07</span></div>
+            <div><span style="color:#4ade80;">✓</span> ipcame&nbsp;&nbsp;&nbsp;<span style="color:#4ade80;">RUNNING</span> <span style="color:#166534;">:5555</span></div>
+            <div><span style="color:#f87171;">✗</span> gate-rfid <span style="color:#f87171;">ERROR&nbsp;&nbsp;</span> <span style="color:#7f1d1d;">mqtt refused connect</span> <span style="color:#166534;">[detail]</span></div>
+          </div>
+
+          <!-- action -->
+          <div style="display:flex;gap:8px;padding:8px 12px;">
+            <div style="border:1px solid #4ade80;color:#4ade80;border-radius:4px;padding:5px 14px;font-size:10px;font-weight:700;">[ START ]</div>
+            <div style="border:1px solid #166534;color:#166534;border-radius:4px;padding:5px 14px;font-size:10px;font-weight:700;">[ STOP ]</div>
+          </div>
+
+          <!-- log -->
+          <div style="padding:6px 12px 12px;font-size:8.5px;line-height:1.7;">
+            <div style="color:#166534;">── live log ─────────────────────</div>
+            <div><span style="color:#166534;">14:02:11</span> <span style="color:#38bdf8;">reader</span> socket listening :11000</div>
+            <div><span style="color:#166534;">14:02:12</span> <span style="color:#4ade80;">ipcame</span> container up (5555)</div>
+            <div><span style="color:#166534;">14:02:15</span> <span style="color:#fbbf24;">rfid&nbsp;&nbsp;</span> connecting mqtt…</div>
+            <div><span style="color:#166534;">14:02:20</span> <span style="color:#f87171;">rfid&nbsp;&nbsp;</span> ERROR connection refused</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>C · Console-First</h3>
+        <p>Near-black terminal aesthetic, everything monospace, log is the hero. Great for engineers, terse. Weaker visual hierarchy for non-technical operators.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="subtitle" style="margin-top:18px;">Click one. Or say "A but lighter" / "mix A+C" etc. This sets the whole app's visual language.</p>

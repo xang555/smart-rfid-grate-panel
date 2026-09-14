@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  rfid_gate_service:
+    image: registry.gitlab.com/laoitdev/23-s-asian-rfid-gate-service
+    network_mode: host
+    volumes:
+      - ./config:/usr/src/app/config
+    environment:
+      - CONFIG_DIR=/usr/src/app/config

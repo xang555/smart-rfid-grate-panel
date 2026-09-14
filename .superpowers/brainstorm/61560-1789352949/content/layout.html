@@ -1,0 +1,113 @@
+  <h2>A1 look, three layouts for the control screen</h2>
+  <p class="subtitle">Soft Dark locked (dark chrome, white cards, mono log wells). Now: how the status, controls, and live log share the screen.</p>
+
+  <div class="cards">
+
+    <!-- ============ L1 : STACKED ============ -->
+    <div class="card" data-choice="l1" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#e9eef4;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:9px;color:#1e293b;height:250px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#273244;">
+            <b style="font-size:10px;color:#f8fafc;">SMART RFID GATE</b>
+            <span style="font-size:8px;color:#94a3b8;">Status · Setup · Settings</span>
+          </div>
+          <div style="display:flex;gap:5px;padding:8px 10px 5px;">
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-top:3px solid #16a34a;border-radius:6px;padding:6px;"><div style="color:#64748b;font-size:7px;">READER</div><b style="color:#15803d;font-size:9px;">● RUNNING</b><div style="color:#94a3b8;font-size:7px;">pid 4821</div></div>
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-top:3px solid #16a34a;border-radius:6px;padding:6px;"><div style="color:#64748b;font-size:7px;">IPCAME</div><b style="color:#15803d;font-size:9px;">● RUNNING</b><div style="color:#94a3b8;font-size:7px;">:5555</div></div>
+            <div style="flex:1;background:#fff;border:1px solid #fca5a5;border-top:3px solid #dc2626;border-radius:6px;padding:6px;"><div style="color:#64748b;font-size:7px;">GATE RFID</div><b style="color:#dc2626;font-size:9px;">● ERROR</b><div style="color:#dc2626;font-size:7px;">mqtt</div></div>
+          </div>
+          <div style="display:flex;gap:6px;padding:2px 10px 6px;">
+            <div style="flex:2;background:#16a34a;border-radius:6px;text-align:center;padding:6px;color:#fff;font-weight:700;font-size:9px;">▶ START</div>
+            <div style="flex:1;background:#fff;border:1px solid #cbd5e1;border-radius:6px;text-align:center;padding:6px;color:#94a3b8;font-weight:700;font-size:9px;">■ STOP</div>
+          </div>
+          <div style="flex:1;margin:0 10px 10px;background:#1e293b;border-radius:6px;padding:6px 8px;font-family:ui-monospace,Menlo,monospace;font-size:7.5px;line-height:1.5;overflow:hidden;">
+            <div style="color:#64748b;">LIVE LOG <span style="color:#4ade80;">● streaming</span></div>
+            <div style="color:#94a3b8;">14:02:11 <span style="color:#38bdf8;">[reader]</span> socket listening :11000</div>
+            <div style="color:#4ade80;">14:02:12 <span style="color:#38bdf8;">[ipcame]</span> container up (5555)</div>
+            <div style="color:#fbbf24;">14:02:15 <span style="color:#38bdf8;">[rfid]</span> connecting mqtt…</div>
+            <div style="color:#f87171;">14:02:20 <span style="color:#38bdf8;">[rfid]</span> ERROR refused ▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>L1 · Stacked</h3>
+        <p>Status cards, buttons, log stacked top-to-bottom. Log gets whatever height is left. Simple, single reading column, works at any width. Log grows as it fills.</p>
+      </div>
+    </div>
+
+    <!-- ============ L2 : SPLIT, DOCKED LOG ============ -->
+    <div class="card" data-choice="l2" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#e9eef4;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:9px;color:#1e293b;height:250px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#273244;">
+            <b style="font-size:10px;color:#f8fafc;">SMART RFID GATE</b>
+            <span style="font-size:8px;color:#94a3b8;">Status · Setup · Settings</span>
+          </div>
+          <div style="flex:1;display:flex;gap:0;">
+            <!-- left col -->
+            <div style="flex:1;padding:8px 8px 8px 10px;">
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="background:#fff;border:1px solid #dbe3ec;border-left:3px solid #16a34a;border-radius:6px;padding:6px 8px;"><div style="color:#64748b;font-size:7px;">READER</div><b style="color:#15803d;font-size:9px;">● RUNNING</b> <span style="color:#94a3b8;font-size:7px;">pid 4821 00:14</span></div>
+                <div style="background:#fff;border:1px solid #dbe3ec;border-left:3px solid #16a34a;border-radius:6px;padding:6px 8px;"><div style="color:#64748b;font-size:7px;">IPCAME</div><b style="color:#15803d;font-size:9px;">● RUNNING</b> <span style="color:#94a3b8;font-size:7px;">:5555</span></div>
+                <div style="background:#fff;border:1px solid #fca5a5;border-left:3px solid #dc2626;border-radius:6px;padding:6px 8px;"><div style="color:#64748b;font-size:7px;">GATE RFID</div><b style="color:#dc2626;font-size:9px;">● ERROR</b> <span style="color:#dc2626;font-size:7px;">mqtt refused</span></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <div style="flex:2;background:#16a34a;border-radius:6px;text-align:center;padding:7px;color:#fff;font-weight:700;font-size:9px;">▶ START</div>
+                <div style="flex:1;background:#fff;border:1px solid #cbd5e1;border-radius:6px;text-align:center;padding:7px;color:#94a3b8;font-weight:700;font-size:9px;">■ STOP</div>
+              </div>
+            </div>
+            <!-- right log dock -->
+            <div style="flex:1.15;margin:8px 10px 8px 0;background:#1e293b;border-radius:6px;padding:6px 8px;font-family:ui-monospace,Menlo,monospace;font-size:7.5px;line-height:1.55;overflow:hidden;">
+              <div style="display:flex;justify-content:space-between;color:#64748b;"><span>LIVE LOG</span><span style="color:#4ade80;">● streaming</span></div>
+              <div style="color:#94a3b8;margin-top:3px;">14:02:11 <span style="color:#38bdf8;">[reader]</span> socket listening :11000</div>
+              <div style="color:#4ade80;">14:02:12 <span style="color:#38bdf8;">[ipcame]</span> container up (5555)</div>
+              <div style="color:#fbbf24;">14:02:15 <span style="color:#38bdf8;">[rfid]</span> connecting mqtt 192.168.55.148…</div>
+              <div style="color:#f87171;">14:02:20 <span style="color:#38bdf8;">[rfid]</span> ERROR connection refused ▾</div>
+              <div style="color:#64748b;">14:02:21 <span style="color:#38bdf8;">[rfid]</span> retry in 5s…</div>
+              <div style="color:#64748b;">14:02:26 <span style="color:#38bdf8;">[reader]</span> tag read EPC 30F1…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>L2 · Split — docked log</h3>
+        <p>Controls left, log docked right as a fixed dark panel filling full height. Log always visible, never pushed off. Best on wide monitors — the typical gate-box screen.</p>
+      </div>
+    </div>
+
+    <!-- ============ L3 : HERO STATUS ============ -->
+    <div class="card" data-choice="l3" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#e9eef4;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:9px;color:#1e293b;height:250px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#273244;">
+            <b style="font-size:10px;color:#f8fafc;">SMART RFID GATE</b>
+            <span style="font-size:8px;color:#94a3b8;">Status · Setup · Settings</span>
+          </div>
+          <!-- big banner -->
+          <div style="margin:8px 10px 0;background:#fff;border:1px solid #fca5a5;border-left:5px solid #dc2626;border-radius:6px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:8px;color:#64748b;letter-spacing:.5px;">SYSTEM</div><b style="font-size:13px;color:#dc2626;">DEGRADED</b> <span style="font-size:8px;color:#64748b;">— gate-rfid failed: mqtt connection refused</span></div>
+            <div style="background:#16a34a;border-radius:6px;padding:6px 14px;color:#fff;font-weight:700;font-size:9px;">▶ START</div>
+          </div>
+          <!-- 3 chips -->
+          <div style="display:flex;gap:5px;padding:6px 10px;">
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-radius:6px;padding:5px 7px;display:flex;justify-content:space-between;"><span style="font-size:7.5px;color:#64748b;">READER</span><b style="color:#15803d;font-size:8px;">● RUNNING</b></div>
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-radius:6px;padding:5px 7px;display:flex;justify-content:space-between;"><span style="font-size:7.5px;color:#64748b;">IPCAME</span><b style="color:#15803d;font-size:8px;">● RUNNING</b></div>
+            <div style="flex:1;background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:5px 7px;display:flex;justify-content:space-between;"><span style="font-size:7.5px;color:#64748b;">GATE RFID</span><b style="color:#dc2626;font-size:8px;">● ERROR</b></div>
+          </div>
+          <div style="flex:1;margin:2px 10px 10px;background:#1e293b;border-radius:6px;padding:6px 8px;font-family:ui-monospace,Menlo,monospace;font-size:7.5px;line-height:1.5;overflow:hidden;">
+            <div style="color:#64748b;">LIVE LOG</div>
+            <div style="color:#94a3b8;">14:02:11 <span style="color:#38bdf8;">[reader]</span> socket listening :11000</div>
+            <div style="color:#4ade80;">14:02:12 <span style="color:#38bdf8;">[ipcame]</span> container up (5555)</div>
+            <div style="color:#f87171;">14:02:20 <span style="color:#38bdf8;">[rfid]</span> ERROR connection refused ▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>L3 · Hero status</h3>
+        <p>One big system banner dominates: green "OPERATIONAL" or red "DEGRADED" with the cause inline and START right there. Glance-from-across-the-room. Cards become small chips.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="subtitle" style="margin-top:18px;">Click one. L2 assumes a wide gate-box monitor; L1 is safest at any size; L3 optimizes for reading state from a distance.</p>

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    image: registry.gitlab.com/laoitdev/23-s-asian-ipcame-service
+    environment:
+      - DISPLAY=unix${DISPLAY}
+      - SAVE_CAMERA_IMAGE_DIR_NAME=images
+      - SERVICE_PORT=5555
+    volumes:
+      - ./config.toml:/usr/src/app/config.toml
+      - ./images_asean_foreign_ministers:/usr/src/app/images
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    ports:
+      - "5555:5555"
+    network_mode: host
+    privileged: true

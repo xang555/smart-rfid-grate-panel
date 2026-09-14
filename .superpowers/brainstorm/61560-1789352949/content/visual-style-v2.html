@@ -1,0 +1,132 @@
+  <h2>Industrial, but lighter — two readings</h2>
+  <p class="subtitle">Same HMI language as A: status LEDs, monospace log, semantic green/amber/red. Two ways to "lighten" it.</p>
+
+  <div class="cards">
+
+    <!-- ============ A1 : SOFT DARK ============ -->
+    <div class="card" data-choice="a1" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#e9eef4;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:10px;color:#1e293b;">
+
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#273244;border-bottom:1px solid #334155;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:14px;height:14px;border-radius:3px;background:#f59e0b;"></div>
+              <b style="font-size:11px;color:#f8fafc;">SMART RFID GATE</b>
+            </div>
+            <div style="display:flex;gap:8px;font-size:9px;color:#94a3b8;">
+              <span style="color:#fbbf24;font-weight:600;">Status</span><span>Setup</span><span>Settings</span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;padding:10px 12px 6px;">
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-top:3px solid #16a34a;border-radius:7px;padding:7px 8px;box-shadow:0 1px 3px rgba(15,23,42,.07);">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">R E A D E R</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.7);"></span>
+                <b style="font-size:10px;color:#15803d;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:2px;">pid 4821 · 00:14:07</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #dbe3ec;border-top:3px solid #16a34a;border-radius:7px;padding:7px 8px;box-shadow:0 1px 3px rgba(15,23,42,.07);">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">I P C A M E</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.7);"></span>
+                <b style="font-size:10px;color:#15803d;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:2px;">container · :5555</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #fca5a5;border-top:3px solid #dc2626;border-radius:7px;padding:7px 8px;box-shadow:0 1px 3px rgba(15,23,42,.07);">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">G A T E &nbsp; R F I D</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#ef4444;"></span>
+                <b style="font-size:10px;color:#dc2626;">ERROR</b>
+              </div>
+              <div style="font-size:8px;color:#dc2626;margin-top:2px;">mqtt refused connect</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;padding:4px 12px 8px;">
+            <div style="flex:2;background:#16a34a;border-radius:7px;text-align:center;padding:7px;color:#fff;font-weight:700;font-size:10px;letter-spacing:1px;box-shadow:0 1px 3px rgba(22,163,74,.35);">▶ START</div>
+            <div style="flex:1;background:#fff;border:1px solid #cbd5e1;border-radius:7px;text-align:center;padding:7px;color:#94a3b8;font-weight:700;font-size:10px;letter-spacing:1px;">■ STOP</div>
+          </div>
+
+          <div style="margin:0 12px 12px;background:#1e293b;border:1px solid #334155;border-radius:7px;padding:7px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5px;line-height:1.6;">
+            <div style="display:flex;justify-content:space-between;color:#64748b;margin-bottom:3px;"><span>LIVE LOG</span><span style="color:#4ade80;">● streaming</span></div>
+            <div style="color:#94a3b8;">14:02:11 <span style="color:#38bdf8;">[reader]</span> socket listening :11000</div>
+            <div style="color:#4ade80;">14:02:12 <span style="color:#38bdf8;">[ipcame]</span> container up (5555)</div>
+            <div style="color:#fbbf24;">14:02:15 <span style="color:#38bdf8;">[rfid]</span> connecting mqtt 192.168.55.148…</div>
+            <div style="color:#f87171;">14:02:20 <span style="color:#38bdf8;">[rfid]</span> ERROR connection refused ▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A1 · Soft Dark</h3>
+        <p>Keeps a dark app chrome (top bar + log well) but content cards are white on a soft blue-gray canvas. Light where you read, dark where you monitor. Best contrast day and night.</p>
+      </div>
+    </div>
+
+    <!-- ============ A2 : FULL LIGHT HMI ============ -->
+    <div class="card" data-choice="a2" onclick="toggleSelect(this)">
+      <div class="card-image" style="background:#f6f8fa;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:10px;color:#1e293b;">
+
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fff;border-bottom:2px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:14px;height:14px;border-radius:3px;background:#0f172a;"></div>
+              <b style="font-size:11px;color:#0f172a;">SMART RFID GATE</b>
+            </div>
+            <div style="display:flex;gap:8px;font-size:9px;color:#64748b;">
+              <span style="color:#0f172a;font-weight:600;border-bottom:2px solid #0f172a;padding-bottom:2px;">Status</span><span>Setup</span><span>Settings</span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;padding:10px 12px 6px;">
+            <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:0;border-left:4px solid #16a34a;padding:7px 8px;">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">R E A D E R</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;"></span>
+                <b style="font-size:10px;color:#15803d;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:2px;">pid 4821 · 00:14:07</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;padding:7px 8px;">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">I P C A M E</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;"></span>
+                <b style="font-size:10px;color:#15803d;">RUNNING</b>
+              </div>
+              <div style="font-size:8px;color:#94a3b8;margin-top:2px;">container · :5555</div>
+            </div>
+            <div style="flex:1;background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;padding:7px 8px;">
+              <div style="font-size:8px;color:#64748b;letter-spacing:.5px;">G A T E &nbsp; R F I D</div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;"></span>
+                <b style="font-size:10px;color:#dc2626;">ERROR</b>
+              </div>
+              <div style="font-size:8px;color:#dc2626;margin-top:2px;">mqtt refused connect</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;padding:4px 12px 8px;">
+            <div style="flex:2;background:#0f172a;border-radius:0;text-align:center;padding:7px;color:#fff;font-weight:700;font-size:10px;letter-spacing:1px;">▶ START</div>
+            <div style="flex:1;background:#fff;border:1px solid #cbd5e1;border-radius:0;text-align:center;padding:7px;color:#94a3b8;font-weight:700;font-size:10px;letter-spacing:1px;">■ STOP</div>
+          </div>
+
+          <div style="margin:0 12px 12px;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #64748b;padding:7px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5px;line-height:1.6;">
+            <div style="display:flex;justify-content:space-between;color:#94a3b8;margin-bottom:3px;"><span>LIVE LOG</span><span style="color:#16a34a;">● streaming</span></div>
+            <div style="color:#475569;">14:02:11 <span style="color:#0369a1;">[reader]</span> socket listening :11000</div>
+            <div style="color:#15803d;">14:02:12 <span style="color:#0369a1;">[ipcame]</span> container up (5555)</div>
+            <div style="color:#b45309;">14:02:15 <span style="color:#0369a1;">[rfid]</span> connecting mqtt 192.168.55.148…</div>
+            <div style="color:#dc2626;">14:02:20 <span style="color:#0369a1;">[rfid]</span> ERROR connection refused ▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A2 · Full Light HMI</h3>
+        <p>Everything light: squared-off industrial cards, thick left status bars, near-black primary button. Reads as instrument panel, not SaaS. Brightest, best in daylight.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="subtitle" style="margin-top:18px;">Click one. A1 = dark chrome + light content. A2 = all light, industrial edges. Neither is the generic SaaS look of B.</p>

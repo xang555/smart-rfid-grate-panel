@@ -1,0 +1,119 @@
+  <h2>Settings & setup/auth screens</h2>
+  <p class="subtitle">Soft Dark + L2 locked. Last visuals: the config editor (full typed forms) and the first-run / setup screens.</p>
+
+  <div class="split">
+
+    <!-- ============ SETTINGS ============ -->
+    <div class="mockup">
+      <div class="mockup-header">/settings — tabs + typed form</div>
+      <div class="mockup-body" style="background:#e9eef4;padding:0;">
+        <div style="font-family:ui-sans-serif,system-ui;font-size:9px;color:#1e293b;height:300px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#273244;">
+            <b style="font-size:10px;color:#f8fafc;">SMART RFID GATE</b>
+            <span style="font-size:8px;color:#94a3b8;">Status · Setup · <span style="color:#fbbf24;">Settings</span></span>
+          </div>
+
+          <!-- tabs -->
+          <div style="display:flex;gap:0;background:#fff;border-bottom:1px solid #dbe3ec;">
+            <div style="padding:6px 12px;font-size:8.5px;font-weight:700;color:#0f172a;border-bottom:2px solid #2563eb;">Reader</div>
+            <div style="padding:6px 12px;font-size:8.5px;color:#64748b;">Cameras</div>
+            <div style="padding:6px 12px;font-size:8.5px;color:#64748b;">Gate RFID</div>
+          </div>
+
+          <div style="flex:1;overflow:hidden;padding:8px 10px;">
+            <!-- section -->
+            <div style="background:#fff;border:1px solid #dbe3ec;border-radius:6px;padding:7px 9px;margin-bottom:6px;">
+              <div style="font-size:7px;color:#94a3b8;letter-spacing:.5px;margin-bottom:4px;">READER</div>
+              <div style="display:flex;gap:7px;margin-bottom:5px;">
+                <div style="flex:1;"><div style="font-size:7.5px;color:#475569;margin-bottom:1px;">reader_name</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;">My Reader</div></div>
+                <div style="flex:1;"><div style="font-size:7.5px;color:#475569;margin-bottom:1px;">speedway_address</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;font-family:ui-monospace,Menlo,monospace;">192.168.55.12</div></div>
+                <div style="flex:1;"><div style="font-size:7.5px;color:#475569;margin-bottom:1px;">socket_port</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;font-family:ui-monospace,Menlo,monospace;">11000</div></div>
+              </div>
+              <div style="display:flex;gap:7px;">
+                <div style="flex:1;"><div style="font-size:7.5px;color:#475569;margin-bottom:1px;">rf_mode <span style="color:#94a3b8;">ⓘ</span></div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;display:flex;justify-content:space-between;"><span>DenseReaderM4 (2)</span><span style="color:#94a3b8;">▾</span></div></div>
+                <div style="flex:1;"><div style="font-size:7.5px;color:#475569;margin-bottom:1px;">selected_search_mode</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;display:flex;justify-content:space-between;"><span>DualTarget</span><span style="color:#94a3b8;">▾</span></div></div>
+              </div>
+              <div style="font-size:7px;color:#94a3b8;margin-top:4px;">ⓘ help text comes from the .toml comment</div>
+            </div>
+
+            <!-- array section -->
+            <div style="background:#fff;border:1px solid #dbe3ec;border-radius:6px;padding:7px 9px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:7px;color:#94a3b8;letter-spacing:.5px;">ANTENNAS ([[antennas]])</span><span style="font-size:7.5px;color:#2563eb;font-weight:600;">+ add row</span></div>
+              <div style="display:flex;gap:5px;align-items:center;background:#f8fafc;border:1px solid #dbe3ec;border-radius:5px;padding:4px 6px;margin-bottom:3px;">
+                <span style="font-size:7.5px;color:#64748b;">id</span><div style="width:24px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">1</div>
+                <span style="font-size:7.5px;color:#64748b;">tx_power</span><div style="width:32px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">17.0</div>
+                <span style="font-size:7.5px;color:#64748b;">rx_sens</span><div style="width:36px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">-60.0</div>
+                <span style="font-size:7.5px;color:#15803d;">✓ on</span>
+                <span style="margin-left:auto;font-size:8px;color:#dc2626;">✕</span>
+              </div>
+              <div style="display:flex;gap:5px;align-items:center;background:#f8fafc;border:1px solid #dbe3ec;border-radius:5px;padding:4px 6px;">
+                <span style="font-size:7.5px;color:#64748b;">id</span><div style="width:24px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">2</div>
+                <span style="font-size:7.5px;color:#64748b;">tx_power</span><div style="width:32px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">30.0</div>
+                <span style="font-size:7.5px;color:#64748b;">rx_sens</span><div style="width:36px;border:1px solid #dbe3ec;border-radius:3px;padding:1px 3px;font-size:8px;background:#fff;">-70.0</div>
+                <span style="font-size:7.5px;color:#15803d;">✓ on</span>
+                <span style="margin-left:auto;font-size:8px;color:#dc2626;">✕</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- save bar -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#fff;border-top:1px solid #dbe3ec;">
+            <span style="font-size:7.5px;color:#94a3b8;">raw TOML preview ▾ · atomic write + .bak</span>
+            <div style="display:flex;gap:5px;">
+              <div style="border:1px solid #cbd5e1;border-radius:5px;padding:4px 10px;font-size:8.5px;color:#64748b;">Revert</div>
+              <div style="background:#2563eb;border-radius:5px;padding:4px 12px;font-size:8.5px;color:#fff;font-weight:700;">Save</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ AUTH + SETUP ============ -->
+    <div class="mockup">
+      <div class="mockup-header">/setup-pin · /login · /setup</div>
+      <div class="mockup-body" style="background:#e9eef4;padding:10px;">
+        <div style="font-family:ui-sans-serif,system-ui;color:#1e293b;">
+
+          <!-- setup-pin / login card -->
+          <div style="background:#fff;border:1px solid #dbe3ec;border-radius:8px;padding:14px;width:210px;margin:0 auto 10px;text-align:center;box-shadow:0 2px 8px rgba(15,23,42,.08);">
+            <div style="width:26px;height:26px;border-radius:6px;background:#273244;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;color:#fbbf24;font-size:13px;">🔒</div>
+            <div style="font-size:10px;font-weight:700;">Create PIN</div>
+            <div style="font-size:8px;color:#94a3b8;margin:2px 0 9px;">First run — sets the panel PIN</div>
+            <div style="display:flex;gap:4px;justify-content:center;margin-bottom:6px;">
+              <div style="width:22px;height:22px;border:1px solid #2563eb;border-radius:5px;"></div>
+              <div style="width:22px;height:22px;border:1px solid #dbe3ec;border-radius:5px;"></div>
+              <div style="width:22px;height:22px;border:1px solid #dbe3ec;border-radius:5px;"></div>
+              <div style="width:22px;height:22px;border:1px solid #dbe3ec;border-radius:5px;"></div>
+              <div style="width:22px;height:22px;border:1px solid #dbe3ec;border-radius:5px;"></div>
+              <div style="width:22px;height:22px;border:1px solid #dbe3ec;border-radius:5px;"></div>
+            </div>
+            <div style="font-size:7.5px;color:#94a3b8;margin-bottom:8px;">6–12 digits · confirm below</div>
+            <div style="background:#273244;border-radius:5px;padding:6px;color:#f8fafc;font-size:9px;font-weight:700;">Create PIN →</div>
+            <div style="font-size:7px;color:#dc2626;margin-top:6px;">5 wrong tries → locked 15 min</div>
+          </div>
+
+          <!-- setup install card -->
+          <div style="background:#fff;border:1px solid #dbe3ec;border-radius:8px;padding:11px;">
+            <div style="font-size:10px;font-weight:700;margin-bottom:7px;">⚙ Setup — install gate project</div>
+            <div style="display:flex;gap:6px;margin-bottom:7px;">
+              <div style="flex:1;"><div style="font-size:7.5px;color:#475569;">Docker username</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;">laoitdev</div></div>
+              <div style="flex:1;"><div style="font-size:7.5px;color:#475569;">Docker password</div><div style="background:#f8fafc;border:1px solid #dbe3ec;border-radius:4px;padding:3px 5px;font-size:8px;color:#94a3b8;">••••••••</div></div>
+            </div>
+            <div style="font-size:7.5px;color:#475569;margin-bottom:6px;">Install path: <span style="font-family:ui-monospace,Menlo,monospace;color:#334155;">~/Desktop/asean-project</span></div>
+            <div style="background:#1e293b;border-radius:6px;padding:6px 8px;font-family:ui-monospace,Menlo,monospace;font-size:7.5px;line-height:1.55;">
+              <div style="color:#4ade80;">✓ apt update + upgrade</div>
+              <div style="color:#4ade80;">✓ docker installed</div>
+              <div style="color:#fbbf24;">⠋ downloading asian-pj.zip… 42%</div>
+              <div style="color:#64748b;">· extract · syncthing · docker login</div>
+            </div>
+            <div style="display:flex;gap:5px;margin-top:7px;">
+              <div style="flex:1;background:#16a34a;border-radius:5px;text-align:center;padding:5px;color:#fff;font-size:8.5px;font-weight:700;">▶ Run setup</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="subtitle" style="margin-top:16px;">Settings: 3 tabs (Reader/Cameras/Gate RFID), sections, typed fields, array rows with +add/✕, help from .toml comments, raw-TON preview, Revert/Save. Auth: centered pin-pad card. Setup: creds + streamed install console. Look right?</p>
