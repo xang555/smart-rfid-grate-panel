@@ -60,3 +60,38 @@ DB_PATH=./data/app.db PORT=3000 node build
 
 The database lives at `DB_PATH` (default `./data/app.db`) and holds the PIN
 hash, sessions, app config, and the last known service state.
+
+## Install on the gate box (Ubuntu)
+
+One command on a fresh Ubuntu box installs the panel and starts it as a
+systemd service (`smart-rfid-gate`), restarted on boot:
+
+```bash
+bash scripts/install.sh
+```
+
+The installer picks up a tarball from `dist/` if present, else downloads the
+URL baked into `scripts/install.sh` (`DEFAULT_URL`). Flags: `--url`, `--port`
+(default 3000), `--no-service`. The database lives at
+`/var/lib/smart-rfid-gate/app.db`, so re-running the installer upgrades the
+app and keeps your data.
+
+### Build a release
+
+```bash
+bash scripts/package-release.sh     # needs Docker, or a linux x64 machine
+# upload dist/smart-rfid-gate-<version>-linux-x64.tar.gz{,.sha256}
+# paste the tarball URL into DEFAULT_URL in scripts/install.sh
+```
+
+### Service control
+
+```bash
+systemctl status smart-rfid-gate
+journalctl -u smart-rfid-gate -f
+```
+
+### macOS
+
+No installer. For preview only: `npm install && npm run dev`
+(reader hardware and the gate services need the Ubuntu box).
