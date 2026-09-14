@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Container smoke test for scripts/install.sh. Requires Docker.
-# Exercises: fresh install (--no-service), layout assertions, and the
-# upgrade path (second run must preserve /var/lib/smart-rfid-gate/app.db).
+# Exercises: fresh install (--no-service), layout assertions, the systemd
+# unit rendering (--print-unit), and the upgrade path (second run must
+# preserve /var/lib/smart-rfid-gate/app.db).
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -24,6 +25,13 @@ docker run --rm -v "$PWD":/repo -w /repo ubuntu:24.04 bash -ceu '
   test -f /opt/smart-rfid-gate/build/index.js
   test -f /opt/smart-rfid-gate/package.json
   test -d /var/lib/smart-rfid-gate
+  # systemd unit rendering (--print-unit must work without root or systemd)
+  local_unit="$(bash scripts/install.sh --print-unit)"
+  echo "$local_unit" | grep -q 'User=root'
+  echo "$local_unit" | grep -q 'Environment=.*DB_PATH=/var/lib/smart-rfid-gate/app.db'
+  echo "$local_unit" | grep -q 'Environment=.*PORT=3000'
+  echo "$local_unit" | grep -q 'ExecStart=.*node /opt/smart-rfid-gate/build'
+  echo "$local_unit" | grep -q 'Restart=always'
   # plant a DB marker, then upgrade
   echo marker-1 > /var/lib/smart-rfid-gate/app.db
   bash scripts/install.sh --no-service

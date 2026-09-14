@@ -3,6 +3,7 @@
 #
 # Usage:
 #   bash install.sh [--url <tarball-url>] [--port <port>] [--no-service]
+#                   [--print-unit]
 #
 # Tarball resolution order: a smart-rfid-gate-*.tar.gz next to this script,
 # then one in dist/ next to this script's repo root, then --url, then the
@@ -17,9 +18,40 @@ SERVICE="smart-rfid-gate"
 TARBALL_URL=""
 PORT="3000"
 NO_SERVICE=0
+PRINT_UNIT=0
 
 log() { echo "[install] $*"; }
 die() { echo "[install] error: $*" >&2; exit 1; }
+
+render_unit() {
+  # Print the systemd unit for the panel service to stdout. Reads module-level
+  # vars: APP_DIR, DATA_DIR, SERVICE, PORT, INVOKING_USER, INVOKING_HOME,
+  # NODE_BIN, DOCKER_GROUP_LINE.
+  cat <<EOF
+[Unit]
+Description=Smart RFID Gate control panel
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+User=$INVOKING_USER
+EOF
+  # Emit the SupplementalGroups line only when a docker group exists, so the
+  # unit never carries a stray blank line where the directive would be.
+  if [[ -n "$DOCKER_GROUP_LINE" ]]; then
+    printf '%s\n' "$DOCKER_GROUP_LINE"
+  fi
+  cat <<EOF
+WorkingDirectory=$APP_DIR
+Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME"
+ExecStart=$NODE_BIN $APP_DIR/build
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +63,7 @@ while [[ $# -gt 0 ]]; do
       [[ "$2" =~ ^[0-9]+$ ]] || die "--port must be a number"
       PORT="$2"; shift 2 ;;
     --no-service) NO_SERVICE=1; shift ;;
+    --print-unit) PRINT_UNIT=1; shift ;;
     --help|-h)
       grep '^# ' "$0" | sed 's/^# \{0,1\}//'
       exit 0 ;;
@@ -51,6 +84,17 @@ fi
   else
     INVOKING_HOME="$(eval echo "~$INVOKING_USER")"
   fi
+
+# --- print unit (must work on any machine, before any prerequisite) ---------
+if [[ "$PRINT_UNIT" -eq 1 ]]; then
+  DOCKER_GROUP_LINE=""
+  if getent group docker >/dev/null 2>&1; then
+    DOCKER_GROUP_LINE="SupplementalGroups=docker"
+  fi
+  NODE_BIN="$(command -v node || echo /usr/bin/node)"
+  render_unit
+  exit 0
+fi
 
 # --- prerequisites ---------------------------------------------------------
 if ! command -v curl >/dev/null 2>&1; then
@@ -166,32 +210,7 @@ if [[ "$NO_SERVICE" -eq 0 ]]; then
     DOCKER_GROUP_LINE="SupplementalGroups=docker"
   fi
   UNIT="/etc/systemd/system/$SERVICE.service"
-  # Emit the SupplementalGroups line only when a docker group exists, so the
-  # unit never carries a stray blank line where the directive would be.
-  {
-    cat <<EOF
-[Unit]
-Description=Smart RFID Gate control panel
-After=network-online.target docker.service
-Wants=network-online.target
-
-[Service]
-User=$INVOKING_USER
-EOF
-    if [[ -n "$DOCKER_GROUP_LINE" ]]; then
-      printf '%s\n' "$DOCKER_GROUP_LINE"
-    fi
-    cat <<EOF
-WorkingDirectory=$APP_DIR
-Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME"
-ExecStart=$NODE_BIN $APP_DIR/build
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  } | $SUDO tee "$UNIT" >/dev/null
+  render_unit | $SUDO tee "$UNIT" >/dev/null
   $SUDO systemctl daemon-reload
   # || true so a failed start still reaches the health-check loop below and
   # its journalctl hint instead of dying here with no pointer to the logs.
