@@ -70,7 +70,9 @@ systemd service (`smart-rfid-gate`), restarted on boot:
 bash scripts/install.sh
 ```
 
-The installer picks up a tarball from `dist/` if present, else downloads the
+The installer needs a release tarball: either present in `dist/`, or set
+`DEFAULT_URL` in `scripts/install.sh` to the Supabase URL you uploaded. The
+installer picks up a tarball from `dist/` if present, else downloads the
 URL baked into `scripts/install.sh` (`DEFAULT_URL`). Flags: `--url`, `--port`
 (default 3000), `--no-service`. The database lives at
 `/var/lib/smart-rfid-gate/app.db`, so re-running the installer upgrades the
