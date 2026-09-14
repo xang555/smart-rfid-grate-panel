@@ -18,6 +18,8 @@
   );
   let saving = $state(false);
   let message = $state('');
+  // Set by whoever writes `message`, not inferred from its wording.
+  let messageOk = $state(false);
   let errors = $state<{ path: string; message: string }[]>([]);
   let showRaw = $state(false);
 
@@ -55,9 +57,9 @@
         body: JSON.stringify({ value: draft })
       });
       const body = await res.json().catch(() => ({}));
-      if (res.ok) { message = 'Saved.'; }
-      else if (body.errors) { errors = body.errors; message = 'Fix the highlighted fields.'; }
-      else { message = body.message ?? 'Save failed.'; }
+      if (res.ok) { messageOk = true; message = 'Saved.'; }
+      else if (body.errors) { messageOk = false; errors = body.errors; message = 'Fix the highlighted fields.'; }
+      else { messageOk = false; message = body.message ?? 'Save failed.'; }
     } finally {
       saving = false;
     }
@@ -91,7 +93,7 @@
     {/if}
 
     {#if message}
-      <p class="text-sm {errors.length || message.startsWith('Save failed') ? 'text-status-error' : 'text-status-ok'}">{message}</p>
+      <p class="text-sm {messageOk ? 'text-status-ok' : 'text-status-error'}">{message}</p>
     {/if}
     {#if errors.length}
       <ul class="text-sm text-status-error list-disc pl-5">

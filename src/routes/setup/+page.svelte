@@ -30,13 +30,17 @@
   let lines = $state<string[]>([]);
   let running = $state(false);
   let resultMsg = $state('');
+  // Whether resultMsg is good news. Decided by the code that sets it — sniffing
+  // the text ("startsWith('Setup failed')") painted every other refusal green.
+  let resultOk = $state(false);
   let confirmRerun = $state(false);
 
   const mark = (key: string, state: StepState) => (steps = { ...steps, [key]: state });
+  const fail = (msg: string) => { resultOk = false; resultMsg = msg; };
 
   async function run() {
-    if (!dockerUser || !dockerPassword) { resultMsg = 'Docker username and password are required.'; return; }
-    if (!zipUrl) { resultMsg = 'A download URL for the project archive is required.'; return; }
+    if (!dockerUser || !dockerPassword) { fail('Docker username and password are required.'); return; }
+    if (!zipUrl) { fail('A download URL for the project archive is required.'); return; }
     running = true; resultMsg = ''; lines = [];
     steps = Object.fromEntries(STEPS.map((s) => [s.key, 'idle']));
 
@@ -48,10 +52,10 @@
       if (!res.ok) {
         // the endpoint refuses a bad URL before it ever spawns the script
         const body = await res.json().catch(() => ({}));
-        resultMsg = body.message ?? 'Setup could not start.';
+        fail(body.message ?? 'Setup could not start.');
         return;
       }
-      if (!res.body) { resultMsg = 'Setup could not start.'; return; }
+      if (!res.body) { fail('Setup could not start.'); return; }
 
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -69,6 +73,7 @@
           if (msg.type === 'line') lines = [...lines, msg.line].slice(-400);
           else if (msg.type === 'step') mark(msg.step, msg.status);
           else if (msg.type === 'result') {
+            resultOk = msg.result.ok;
             resultMsg = msg.result.ok ? 'Setup complete.' : `Setup failed: ${msg.result.message}`;
           }
         }
@@ -124,7 +129,7 @@
         class="px-5 py-2.5 rounded-md bg-accent text-white font-medium disabled:opacity-50">
         {running ? 'Running…' : 'Run setup'}
       </button>
-      {#if resultMsg}<p class="text-sm {resultMsg.startsWith('Setup failed') ? 'text-status-error' : 'text-status-ok'}">{resultMsg}</p>{/if}
+      {#if resultMsg}<p class="text-sm {resultOk ? 'text-status-ok' : 'text-status-error'}">{resultMsg}</p>{/if}
     </form>
 
     <div class="rounded-card bg-card border border-hairline shadow-sm p-5">

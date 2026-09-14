@@ -49,6 +49,8 @@ test('settings edits persist to the toml file', async ({ page }) => {
   await page.getByLabel('Reader IP address').fill('10.20.30.40');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Saved.')).toBeVisible();
+  // success still reads as success
+  await expect(page.getByText('Saved.')).toHaveClass(/text-status-ok/);
 
   expect(fs.readFileSync(path.join(dir, 'config.toml'), 'utf8')).toContain('10.20.30.40');
   fs.rmSync(dir, { recursive: true, force: true });

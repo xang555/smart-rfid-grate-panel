@@ -11,6 +11,19 @@ async function signIn(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL('http://localhost:5273/');
 }
 
+test('setup shows a refusal in the error colour, not the success colour', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/setup');
+  await page.waitForLoadState('networkidle');
+
+  // empty credentials: refused before any request goes out
+  await page.getByRole('button', { name: 'Run setup', exact: true }).click();
+
+  const message = page.getByText('Docker username and password are required.');
+  await expect(message).toBeVisible();
+  await expect(message).toHaveClass(/text-status-error/);
+});
+
 test('setup refuses to start without a download url', async ({ page }) => {
   await signIn(page);
   await page.goto('/setup');
