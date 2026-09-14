@@ -24,11 +24,14 @@ losing data. macOS gets no installer — dev/preview docs only.
 
 Produces the release tarball.
 
-- Runs inside a `node:22-bookworm-slim` Docker container so packaging works
-  from any host OS (macOS included). Needed because `better-sqlite3` compiles
-  a platform-specific binding; the tarball must carry the Linux x64 build.
+- Runs inside a `node:22-bookworm-slim` Docker container when Docker is
+  available, so packaging works from any host OS (macOS included). Needed
+  because `better-sqlite3` compiles a platform-specific binding; the tarball
+  must carry the Linux x64 build.
   Sequence: `npm ci` (full, for the build), `npm run build`, then
   `npm ci --omit=dev` to replace `node_modules` with production-only deps.
+- No Docker? Falls back to a native build, allowed only on Linux x64 hosts
+  (e.g. the gate box itself). Any other host aborts with a clear message.
 - Tars `build/`, production `node_modules/` (via `npm ci --omit=dev` for
   runtime deps) and `package.json` into
   `smart-rfid-gate-<version>-linux-x64.tar.gz`.
@@ -41,10 +44,11 @@ One command installs, enables, and starts the panel.
 
 Order of operations:
 
-1. `set -euo pipefail`; require bash, curl, systemd (skip-service mode for
-   container testing).
+1. `set -euo pipefail`; require bash; install `curl` via apt if missing;
+   systemd required unless `--no-service`.
 2. Tarball source resolution, first match wins:
-   - file named `smart-rfid-gate-*.tar.gz` next to the script (offline/USB)
+   - file named `smart-rfid-gate-*.tar.gz` next to the script, then in
+     `dist/` (offline/USB/local build)
    - `--url <url>` argument
    - baked-in default Supabase URL constant at the top of the script
 3. Download (if remote), verify sha256 against `<tarball>.sha256` fetched from
