@@ -8,7 +8,7 @@ import { setExecForTests, resetExecForTests } from '../../src/lib/server/proc/do
 
 vi.mock('$lib/server/db', async (importOriginal) => {
   const actual: any = await importOriginal();
-  return { ...actual, getDb: () => globalThis.__testDb };
+  return { ...actual, getDb: () => (globalThis as any).__testDb };
 });
 
 let db: any, dir: string;

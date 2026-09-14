@@ -10,7 +10,7 @@ let db: any, dir: string;
 
 vi.mock('$lib/server/db', async (importOriginal) => {
   const actual: any = await importOriginal();
-  return { ...actual, getDb: () => globalThis.__testDb };
+  return { ...actual, getDb: () => (globalThis as any).__testDb };
 });
 
 function makeProject() {
@@ -33,7 +33,7 @@ beforeEach(() => {
   clearLogs();
   setDepsForTests({
     spawnReader: vi.fn(() => ({ pid: 55 })),
-    stopReader: vi.fn(async () => 'term'),
+    stopReader: vi.fn(async () => 'term' as const),
     isReaderAlive: vi.fn(() => true),
     probePort: vi.fn(async () => true),
     composeUp: vi.fn(async () => ({ code: 0, stdout: '', stderr: '' })),

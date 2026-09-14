@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { HTMLInputAttributes } from 'svelte/elements';
+
   let {
     label = 'PIN',
     autocomplete = 'current-password',
@@ -8,7 +10,7 @@
     disabled = false
   }: {
     label?: string;
-    autocomplete?: string;
+    autocomplete?: HTMLInputAttributes['autocomplete'];
     minlength?: number;
     maxlength?: number;
     value?: string;
