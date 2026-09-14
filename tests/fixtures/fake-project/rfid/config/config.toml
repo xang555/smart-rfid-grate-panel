@@ -1,0 +1,25 @@
+[reader_link]
+socket_address = "localhost"
+socket_port = 11000
+tx_power = 17
+receiver_sensitivity_index = 2
+
+[mqtt]
+mqtt_broker_address = "tcp://localhost:1883"
+mqtt_user = "gate"
+mqtt_passwd = "changeme"
+
+[behaviour]
+cleanup_interval = 5
+report_every_n_tags = 1
+search_mode = "DualTarget"
+tag_timeout = 10
+tag_population = 20
+event_id = "fixture-event"
+
+[[gates]]
+gate_id = 1
+ant = 1
+ipcame_gateway_address = "localhost"
+ipcame_port = 5555
+camera_id = 1

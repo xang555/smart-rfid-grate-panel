@@ -1,42 +1,62 @@
-# sv
+# Smart RFID Gate — Web Control Panel
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A small SvelteKit app that runs on the gate box. It guards itself with a PIN,
+installs the RFID gate project, edits the project's TOML config through typed
+forms, and starts or stops the three gate services — each one on its own, or all
+of them together.
 
-## Creating a project
+## Services
 
-If you're seeing this, you've probably already done this step. Congrats!
+| # | Service   | What it is                          | How it is started        |
+|---|-----------|-------------------------------------|--------------------------|
+| 1 | Reader    | `impinJReaderGateway/ImpinJReader`  | spawned as a process     |
+| 2 | IP Camera | `ipcame`                            | `docker compose up -d`   |
+| 3 | Gate RFID | `rfid`                              | `docker compose up -d`   |
 
-```sh
-# create a new project
-npx sv create my-app
+Start order is 1 → 2 → 3. Stop runs in reverse. Gate RFID needs Reader and IP
+Camera up first; starting it alone opens a confirmation dialog.
+
+## Configuration
+
+Settings edits write to the project's TOML files:
+
+| Tab       | File                      |
+|-----------|---------------------------|
+| Reader    | `config.toml`             |
+| Cameras   | `ipcame/config.toml`      |
+| Gate RFID | `rfid/config/config.toml` |
+
+Writes are atomic and leave a `.bak` of the previous file. Unknown keys are
+preserved; hand-written comments outside known keys are not.
+
+## Develop
+
+```bash
+npm install
+npm run dev          # http://localhost:5173
 ```
 
-To recreate this project with the same configuration:
+First run sends you to `/setup-pin` to create a 6–12 digit PIN.
 
-```sh
-# recreate this project
-npx sv@0.17.0 create --template minimal --types ts --install npm rfid-scaffold
+## Test
+
+```bash
+npm test             # vitest unit + integration
+npx playwright install chromium
+npm run test:e2e     # playwright
 ```
 
-## Developing
+The e2e suite is serial: it creates a panel PIN (`135790`) in the dev database
+and points `project_path` at a disposable copy of `tests/fixtures/fake-project`.
+Delete `data/app.db` before a run to exercise the first-boot path.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Build and run
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
+```bash
 npm run build
+node build                 # defaults to port 3000
+DB_PATH=./data/app.db PORT=3000 node build
 ```
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The database lives at `DB_PATH` (default `./data/app.db`) and holds the PIN
+hash, sessions, app config, and the last known service state.

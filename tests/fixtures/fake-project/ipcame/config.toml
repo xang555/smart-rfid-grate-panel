@@ -1,0 +1,14 @@
+[service]
+SERVICE_PORT = 5555
+SAVE_CAMERA_IMAGE_DIR_NAME = "images"
+image_width = 1280
+image_height = 780
+rotate = "ROTATE_180"
+
+[[ipcame]]
+IP_CAMERA_ADDRESS = "192.168.1.64"
+RTSP_PORT = 554
+IP_CAMERA_USER = "admin"
+IP_CAMERA_PASSWORD = "changeme"
+IP_CAMERA_CHANNEL = 101
+relate_gate_id = 10001

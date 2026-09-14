@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo "ImpinJReader stub started"
+trap 'echo "ImpinJReader stub stopping"; exit 0' TERM INT
+while true; do sleep 1; done

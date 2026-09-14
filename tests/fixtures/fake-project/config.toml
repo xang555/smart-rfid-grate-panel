@@ -1,0 +1,19 @@
+[reader]
+reader_name = "Fixture Reader"
+speedway_address = "127.0.0.1"
+socket_port = 11000
+session = 1
+tag_population = 20
+rf_mode = 2
+selected_search_mode = "DualTarget"
+
+[filter]
+enabled = false
+tag_mask = "0000"
+bit_count = 16
+
+[[antennas]]
+ant_id = 1
+tx_power = 17.0
+rx_sensitivity = -60.0
+enable = true
