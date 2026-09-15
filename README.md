@@ -80,11 +80,23 @@ app and keeps your data.
 
 ### Build a release
 
+Push a version tag — GitHub Actions builds the tarball and attaches it to a
+GitHub Release automatically:
+
 ```bash
-bash scripts/package-release.sh     # needs Docker, or a linux x64 machine
-# upload dist/smart-rfid-gate-<version>-linux-x64.tar.gz{,.sha256}
-# paste the tarball URL into DEFAULT_URL in scripts/install.sh
+git tag v0.0.1 && git push origin v0.0.1
 ```
+
+Or build locally (needs Docker, or a linux x64 machine):
+
+```bash
+bash scripts/package-release.sh
+# upload dist/smart-rfid-gate-<version>-linux-x64.tar.gz{,.sha256}
+```
+
+Either way, paste the tarball URL into `DEFAULT_URL` in `scripts/install.sh`.
+For a GitHub release that URL is:
+`https://github.com/<owner>/<repo>/releases/download/v<version>/smart-rfid-gate-<version>-linux-x64.tar.gz`
 
 ### Service control
 
