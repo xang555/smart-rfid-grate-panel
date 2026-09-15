@@ -208,6 +208,12 @@ if [[ "$NO_SERVICE" -eq 0 ]]; then
   DOCKER_GROUP_LINE=""
   if getent group docker >/dev/null 2>&1; then
     DOCKER_GROUP_LINE="SupplementalGroups=docker"
+    # SupplementalGroups needs systemd >= 256; group membership covers older
+    # releases (e.g. Ubuntu 24.04's systemd 255). Takes effect on next login.
+    if ! id -nG "$INVOKING_USER" | grep -qw docker; then
+      $SUDO usermod -aG docker "$INVOKING_USER"
+      log "added $INVOKING_USER to docker group (re-login to apply)"
+    fi
   fi
   UNIT="/etc/systemd/system/$SERVICE.service"
   render_unit | $SUDO tee "$UNIT" >/dev/null
@@ -220,7 +226,8 @@ if [[ "$NO_SERVICE" -eq 0 ]]; then
   log "waiting for panel on port $PORT"
   ok=0
   for _ in $(seq 1 30); do
-    code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT" || true)"
+    # --noproxy: health check must not route localhost through a proxy.
+    code="$(curl --noproxy '*' -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT" || true)"
     if [[ "$code" =~ ^(200|301|302|307|308)$ ]]; then ok=1; break; fi
     sleep 1
   done
