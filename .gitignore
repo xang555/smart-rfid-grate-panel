@@ -36,3 +36,4 @@ vite.config.ts.timestamp-*
 # local tool state / test artifacts
 .omc/
 .playwright-mcp/
+.superpowers/
