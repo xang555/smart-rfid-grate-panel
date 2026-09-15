@@ -41,12 +41,17 @@ if command -v docker >/dev/null 2>&1; then
       npm run build
       # Prune dev deps WITHOUT reinstalling: `npm ci --omit=dev` wipes
       # node_modules and the reinstall can end up without the compiled
-      # better-sqlite3 binding. Prune keeps the binding built above.
+      # better-sqlite3 binding. Prune keeps whatever was built above.
       npm prune --omit=dev
-      # Fail fast if the native binding is missing instead of shipping a
-      # dead tarball.
-      ls node_modules/better-sqlite3/build/Release/better_sqlite3.node
+      # Fail fast on a binding that does not load, instead of shipping a
+      # dead tarball. Rebuild once if the first load fails.
+      if ! node -e "require('better-sqlite3')" 2>/dev/null; then
+        echo "better-sqlite3 did not load - forcing rebuild"
+        npm rebuild better-sqlite3 --foreground-scripts
+      fi
       node -e "require('better-sqlite3')"
+      echo "--- compiled native modules going into the tarball ---"
+      find node_modules -name "*.node" -print
       mkdir -p /out
       tar -czf "/out/$NAME.tar.gz" build node_modules package.json
       cd /out
