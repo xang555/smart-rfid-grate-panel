@@ -165,7 +165,9 @@ NODE_BIN="$(command -v node)"
 log "using node: $NODE_BIN ($($NODE_BIN -v))"
 
 # --- stop old service -------------------------------------------------------
-if [[ "$NO_SERVICE" -eq 0 ]] && systemctl list-unit-files | grep -q "^$SERVICE"; then
+# NOTE: no `grep -q` here — it exits on the first match and SIGPIPEs systemctl,
+# which pipefail turns into a false negative, silently skipping the stop.
+if [[ "$NO_SERVICE" -eq 0 ]] && systemctl list-unit-files 2>/dev/null | grep "^$SERVICE" >/dev/null; then
   log "stopping existing service"
   $SUDO systemctl stop "$SERVICE" 2>/dev/null || true
   $SUDO systemctl disable "$SERVICE" 2>/dev/null || true
@@ -218,9 +220,14 @@ if [[ "$NO_SERVICE" -eq 0 ]]; then
   UNIT="/etc/systemd/system/$SERVICE.service"
   render_unit | $SUDO tee "$UNIT" >/dev/null
   $SUDO systemctl daemon-reload
-  # || true so a failed start still reaches the health-check loop below and
-  # its journalctl hint instead of dying here with no pointer to the logs.
-  $SUDO systemctl enable --now "$SERVICE" || true
+  # restart guarantees the new build is what runs; enable --now covers the
+  # first install. `|| true` so a failed start still reaches the health-check
+  # loop below and its journalctl hint instead of dying with no pointer.
+  if $SUDO systemctl is-active --quiet "$SERVICE"; then
+    $SUDO systemctl restart "$SERVICE" || true
+  else
+    $SUDO systemctl enable --now "$SERVICE" || true
+  fi
 
   # --- health check ----------------------------------------------------------
   log "waiting for panel on port $PORT"
