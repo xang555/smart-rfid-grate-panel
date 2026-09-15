@@ -30,6 +30,7 @@ docker run --rm -v "$PWD":/repo -w /repo ubuntu:24.04 bash -ceu '
   echo "$local_unit" | grep -q 'User=root'
   echo "$local_unit" | grep -q 'Environment=.*DB_PATH=/var/lib/smart-rfid-gate/app.db'
   echo "$local_unit" | grep -q 'Environment=.*PORT=3000'
+  echo "$local_unit" | grep -q 'Environment=.*ORIGIN=http://'
   echo "$local_unit" | grep -q 'ExecStart=.*node /opt/smart-rfid-gate/build'
   echo "$local_unit" | grep -q 'Restart=always'
   # plant a DB marker, then upgrade

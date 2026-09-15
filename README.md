@@ -76,7 +76,11 @@ installer picks up a tarball from `dist/` if present, else downloads the
 URL baked into `scripts/install.sh` (`DEFAULT_URL`). Flags: `--url`, `--port`
 (default 3000), `--no-service`. The database lives at
 `/var/lib/smart-rfid-gate/app.db`, so re-running the installer upgrades the
-app and keeps your data.
+app and keeps your data. The installer bakes `ORIGIN=http://<lan-ip>:<port>`
+into the service — if the box's IP ever changes, rerun the installer (or edit
+`ORIGIN` in `/etc/systemd/system/smart-rfid-gate.service` and
+`systemctl daemon-reload && systemctl restart smart-rfid-gate`), otherwise
+login loops back to `/login`.
 
 ### Build a release
 

@@ -43,7 +43,7 @@ EOF
   fi
   cat <<EOF
 WorkingDirectory=$APP_DIR
-Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME"
+Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME" "ORIGIN=$ORIGIN"
 ExecStart=$NODE_BIN $APP_DIR/build
 Restart=always
 RestartSec=3
@@ -84,6 +84,14 @@ fi
   else
     INVOKING_HOME="$(eval echo "~$INVOKING_USER")"
   fi
+
+# --- origin -----------------------------------------------------------------
+# The panel must know its public URL (ORIGIN) or SvelteKit marks the session
+# cookie Secure even on plain http, and browsers on the LAN drop it — login
+# loops back. Baked at install time from the LAN IP; rerun the installer if
+# the box's IP changes.
+LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || true
+ORIGIN="http://${LAN_IP:-127.0.0.1}:$PORT"
 
 # --- print unit (must work on any machine, before any prerequisite) ---------
 if [[ "$PRINT_UNIT" -eq 1 ]]; then
