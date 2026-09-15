@@ -23,10 +23,19 @@ build_native() {
 
 if command -v docker >/dev/null 2>&1; then
   mkdir -p "$OUT"
-  # --user keeps the artifacts owned by the invoking user, not root.
-  docker run --rm --user "$(id -u):$(id -g)" -e NAME="$NAME" \
-    -v "$PWD":/app -v "$PWD/$OUT":/out \
-    -w /app node:22-bookworm-slim bash -ceu '
+  # Build as root inside a COPY of the source (so the host checkout keeps its
+  # ownership and no root-owned files leak into it), with python3/make/g++
+  # installed: better-sqlite3 falls back to a node-gyp source build when the
+  # prebuilt binary download fails. Only dist/ is written back, chowned to
+  # the invoking user.
+  docker run --rm -e NAME="$NAME" -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
+    -v "$PWD":/src:ro -v "$PWD/$OUT":/out \
+    -w /work node:22-bookworm-slim bash -ceu '
+      apt-get update -qq
+      apt-get install -y -qq --no-install-recommends python3 make g++ ca-certificates
+      mkdir -p /work
+      tar -C /src --exclude=./node_modules --exclude=./dist --exclude=./.git -cf - . | tar -C /work -xf -
+      cd /work
       export HOME=/tmp
       npm ci
       npm run build
@@ -35,6 +44,7 @@ if command -v docker >/dev/null 2>&1; then
       tar -czf "/out/$NAME.tar.gz" build node_modules package.json
       cd /out
       sha256sum "$NAME.tar.gz" > "$NAME.tar.gz.sha256"
+      chown -R "$HOST_UID:$HOST_GID" /out
     '
 elif [[ "$(uname -s)-$(uname -m)" == "Linux-x86_64" ]]; then
   build_native
