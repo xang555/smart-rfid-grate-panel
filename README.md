@@ -91,6 +91,17 @@ GitHub Release automatically:
 git tag v0.0.1 && git push origin v0.0.1
 ```
 
+### One-liner install (curl | bash)
+
+Install straight from GitHub, no clone needed — pass the release tarball URL
+explicitly (curl|bash has no local `dist/`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xang555/smart-rfid-grate-panel/main/scripts/install.sh \
+  | sudo bash -s -- \
+  --url https://github.com/xang555/smart-rfid-grate-panel/releases/download/v<TAG>/smart-rfid-gate-<version>-linux-x64.tar.gz
+```
+
 Or build locally (needs Docker, or a linux x64 machine):
 
 ```bash
