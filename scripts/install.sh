@@ -43,7 +43,7 @@ EOF
   fi
   cat <<EOF
 WorkingDirectory=$APP_DIR
-Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME" "ORIGIN=$ORIGIN"
+Environment="PORT=$PORT" "DB_PATH=$DATA_DIR/app.db" "HOME=$INVOKING_HOME" "ORIGIN=$ORIGIN" $DISPLAY_PART
 ExecStart=$NODE_BIN $APP_DIR/build
 Restart=always
 RestartSec=3
@@ -92,6 +92,18 @@ fi
 # the box's IP changes.
 LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || true
 ORIGIN="http://${LAN_IP:-127.0.0.1}:$PORT"
+
+# --- display (desktop boxes) -------------------------------------------------
+# The ipcame container renders its camera window through X11
+# (DISPLAY=unix${DISPLAY} + /tmp/.X11-unix mount in the compose file). A
+# systemd service has no DISPLAY, so the compose interpolation comes out
+# empty and the container runs headless. Bake the detected display in.
+DISPLAY_PART=""
+xsock="$(ls /tmp/.X11-unix 2>/dev/null | grep -m1 '^X[0-9]' || true)"
+if [[ -n "$xsock" ]]; then
+  DISPLAY_PART="\"DISPLAY=:${xsock#X}\" "
+  log "detected X display :${xsock#X} — will be passed to docker compose"
+fi
 
 # --- print unit (must work on any machine, before any prerequisite) ---------
 if [[ "$PRINT_UNIT" -eq 1 ]]; then

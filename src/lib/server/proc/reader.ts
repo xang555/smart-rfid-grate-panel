@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { spawn as nodeSpawn } from 'node:child_process';
+import { spawn as nodeSpawn, execFile } from 'node:child_process';
 import net from 'node:net';
 import { resolveProjectFile } from '../settings';
 
@@ -28,6 +28,27 @@ export function resetKillForTests(): void {
 
 export function isAlive(pid: number): boolean {
   return aliveFn(pid);
+}
+
+// The reader can be started outside the panel (start.sh, a terminal). pgrep
+// finds those processes so the panel can adopt — and stop — them.
+const defaultFindPids = (): Promise<number[]> =>
+  new Promise((resolve) => {
+    execFile('pgrep', ['-f', 'ImpinJReader'], { timeout: 5000 }, (err, stdout) => {
+      if (err) return resolve([]);
+      resolve(
+        stdout
+          .split('\n')
+          .map((line) => parseInt(line.trim(), 10))
+          .filter((n) => Number.isFinite(n) && n > 0)
+      );
+    });
+  });
+let findPidsFn = defaultFindPids;
+export function setFindPidsForTests(fn: () => Promise<number[]>): void { findPidsFn = fn; }
+export function resetFindPidsForTests(): void { findPidsFn = defaultFindPids; }
+export function findReaderPids(): Promise<number[]> {
+  return findPidsFn();
 }
 
 export function spawnReader(opts: {

@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { getProjectPath, checkLayout, resolveProjectFile } from '../settings';
 import { SCHEMAS } from '../config/schema';
 import { parse } from 'smol-toml';
-import { spawnReader, stopReader, isAlive, probePort } from '../proc/reader';
+import { spawnReader, stopReader, isAlive, probePort, findReaderPids } from '../proc/reader';
 import { runComposeUp, runComposeDown, composeStatus, runComposePull } from '../proc/docker';
 import { pull as pullImage, prepareCompose } from '../images';
 import { pushLog, type LogLevel } from './logbus';
@@ -17,6 +17,7 @@ interface Deps {
   stopReader: typeof stopReader;
   isReaderAlive: (pid: number) => boolean;
   probePort: typeof probePort;
+  findReaderPids: typeof findReaderPids;
   composeUp: typeof runComposeUp;
   composeDown: typeof runComposeDown;
   composeStatus: typeof composeStatus;
@@ -27,7 +28,7 @@ interface Deps {
 }
 
 const realDeps: Deps = {
-  spawnReader, stopReader, isReaderAlive: isAlive, probePort,
+  spawnReader, stopReader, isReaderAlive: isAlive, probePort, findReaderPids,
   composeUp: runComposeUp, composeDown: runComposeDown, composeStatus,
   composePull: runComposePull, pullImage, prepareCompose,
   sleep: (ms) => new Promise((r) => setTimeout(r, ms))
@@ -105,6 +106,19 @@ async function startReader(db: Database.Database): Promise<ActionResult> {
     return { ok: false, service: 'reader', code: 'not_installed', message: msg, detail: layout.missing.join(', ') };
   }
   try {
+    // An already-running reader (start.sh, a terminal) owns the socket port;
+    // spawning a second one would fail its readiness probe. Adopt instead.
+    const { host, port } = readReaderAddr(db);
+    if (await deps.probePort(host, port, 500)) {
+      const pids = await deps.findReaderPids();
+      const pid = pids[0] ?? null;
+      setState(db, 'reader', 'running', { pid, detail: pid ? null : 'external' });
+      emit('reader', 'info', pid
+        ? `Reader already running (pid ${pid}); adopted`
+        : 'Reader already running; adopted');
+      return { ok: true, service: 'reader', message: 'Reader already running' };
+    }
+
     const { pid } = deps.spawnReader({
       projectPath,
       onLine: (stream, line) => emit('reader', stream === 'stderr' ? 'warn' : 'info', line)
@@ -112,7 +126,6 @@ async function startReader(db: Database.Database): Promise<ActionResult> {
     setState(db, 'reader', 'starting', { pid });
     emit('reader', 'info', `Reader process started (pid ${pid})`);
 
-    const { host, port } = readReaderAddr(db);
     let ready = false;
     for (let i = 0; i < 20; i++) {
       await deps.sleep(500);
@@ -122,7 +135,10 @@ async function startReader(db: Database.Database): Promise<ActionResult> {
     if (!ready) {
       const msg = `Reader did not open ${host}:${port}`;
       emit('reader', 'error', msg);
-      setState(db, 'reader', 'error', { pid, detail: msg });
+      // The spawn is detached; leaving it alive on a failed start leaks a
+      // zombie that no later Stop knows how to reach.
+      await deps.stopReader(pid);
+      setState(db, 'reader', 'error', { detail: msg });
       return { ok: false, service: 'reader', code: 'not_ready', message: msg, detail: `process alive: ${deps.isReaderAlive(pid)}` };
     }
     setState(db, 'reader', 'running', { pid });
@@ -144,6 +160,19 @@ async function stopReaderSvc(db: Database.Database): Promise<ActionResult> {
   const row = getState(db, 'reader');
   const pid = row?.pid as number | undefined;
   if (!pid || !deps.isReaderAlive(pid)) {
+    // Stale/unknown pid, but the reader may have been started outside the
+    // panel: if its port answers, find and stop those processes.
+    const { host, port } = readReaderAddr(db);
+    if (await deps.probePort(host, port, 500)) {
+      const pids = await deps.findReaderPids();
+      if (pids.length) {
+        setState(db, 'reader', 'stopping', { pid: pids[0] });
+        for (const p of pids) await deps.stopReader(p);
+        setState(db, 'reader', 'stopped', { pid: null });
+        emit('reader', 'system', `Reader stopped (external, ${pids.length} process${pids.length > 1 ? 'es' : ''})`);
+        return { ok: true, service: 'reader', message: 'Reader stopped' };
+      }
+    }
     setState(db, 'reader', 'stopped', { pid: null });
     return { ok: true, service: 'reader', message: 'Reader already stopped' };
   }
@@ -307,14 +336,23 @@ export async function stopAll(db: Database.Database): Promise<ActionResult[]> {
 }
 
 export async function reconcile(db: Database.Database): Promise<void> {
-  // reader: clear stale pid
+  // reader: adopt an externally started reader, else clear a stale pid
   const readerRow = getState(db, 'reader');
   const pid = readerRow?.pid as number | undefined;
   if (pid && deps.isReaderAlive(pid)) {
     setState(db, 'reader', 'running', { pid });
-  } else if (pid || readerRow?.actual === 'running' || readerRow?.actual === 'starting') {
-    setState(db, 'reader', 'stopped', { pid: null });
-    emit('reader', 'system', 'Reader PID was stale at startup; marked stopped');
+  } else {
+    const { host, port } = readReaderAddr(db);
+    if (await deps.probePort(host, port, 500)) {
+      const pids = await deps.findReaderPids();
+      if (pids.length) {
+        setState(db, 'reader', 'running', { pid: pids[0] });
+        emit('reader', 'system', `Reader already running (pid ${pids[0]}); adopted`);
+      }
+    } else if (pid || readerRow?.actual === 'running' || readerRow?.actual === 'starting') {
+      setState(db, 'reader', 'stopped', { pid: null });
+      emit('reader', 'system', 'Reader PID was stale at startup; marked stopped');
+    }
   }
   // docker: sync actual state
   for (const name of ['ipcame', 'rfid'] as const) {

@@ -25,7 +25,9 @@ function fakeDeps(overrides: any = {}) {
     spawnReader: vi.fn(({ projectPath }: any) => { calls.push('spawn:reader'); return { pid: 100 }; }),
     stopReader: vi.fn(async (pid: number) => { calls.push(`stop-reader:${pid}`); return 'term'; }),
     isReaderAlive: vi.fn(() => true),
-    probePort: vi.fn(async () => true),
+    // Port answers only once a reader has been spawned: the pre-spawn
+    // "already running?" probe sees a free port, the readiness probe succeeds.
+    probePort: vi.fn(async () => calls.includes('spawn:reader')),
     composeUp: vi.fn(async (args: string[]) => { calls.push(`up:${baseOf(args)}`); return { code: 0, stdout: '', stderr: '' }; }),
     composeDown: vi.fn(async (args: string[]) => { calls.push(`down:${baseOf(args)}`); return { code: 0, stdout: '', stderr: '' }; }),
     composeStatus: vi.fn(async () => 'running' as const),
@@ -33,6 +35,7 @@ function fakeDeps(overrides: any = {}) {
     // No image configured in these fixtures, so no override is written and no
     // pull happens; pull() resolves ok immediately.
     pullImage: vi.fn(async () => ({ ok: true })),
+    findReaderPids: vi.fn(async () => [] as number[]),
     prepareCompose: vi.fn(async (_db: any, s: string) => ({
       args: ['-f', path.join(dir, s, 'docker-compose.yml')],
       composeService: s === 'ipcame' ? 'app' : 'rfid_gate_service'
@@ -83,7 +86,7 @@ describe('startAll', () => {
     const res = await startAll(db);
     expect(res.map((r) => r.service)).toEqual(['reader']);
     expect(res[0].ok).toBe(false);
-    expect(calls).toEqual(['spawn:reader']); // never reached ipcame
+    expect(calls).toEqual(['spawn:reader', 'stop-reader:100']); // kill the failed spawn; never reached ipcame
     expect(status(db).find((s) => s.name === 'reader')?.actual).toBe('error');
   });
 
@@ -262,6 +265,78 @@ describe('image pull', () => {
     setDepsForTests(fakeDeps());
     await startOne(db, 'reader');
     expect(calls).toEqual(['spawn:reader']);
+  });
+});
+
+describe('existing install adoption', () => {
+  it('adopts an externally running reader instead of double-spawning', async () => {
+    makeProject();
+    const d = fakeDeps({
+      probePort: vi.fn(async () => true),
+      findReaderPids: vi.fn(async () => [4242])
+    });
+    setDepsForTests(d);
+    const r = await startOne(db, 'reader');
+    expect(r.ok).toBe(true);
+    expect(d.spawnReader).not.toHaveBeenCalled();
+    expect(status(db)[0].actual).toBe('running');
+    expect(status(db)[0].pid).toBe(4242);
+  });
+
+  it('adopts without a pid when pgrep finds none but the port answers', async () => {
+    makeProject();
+    const d = fakeDeps({
+      probePort: vi.fn(async () => true),
+      findReaderPids: vi.fn(async () => [])
+    });
+    setDepsForTests(d);
+    const r = await startOne(db, 'reader');
+    expect(r.ok).toBe(true);
+    expect(d.spawnReader).not.toHaveBeenCalled();
+    expect(status(db)[0].actual).toBe('running');
+  });
+
+  it('kills a spawned reader that never opens its port', async () => {
+    makeProject();
+    const d = fakeDeps({
+      probePort: vi.fn(async () => false),
+      findReaderPids: vi.fn(async () => [])
+    });
+    setDepsForTests(d);
+    const r = await startOne(db, 'reader');
+    expect(r.ok).toBe(false);
+    expect(d.stopReader).toHaveBeenCalledWith(100);
+  });
+
+  it('stops an externally started reader via the pgrep fallback', async () => {
+    makeProject();
+    db.prepare(
+      `INSERT INTO service_state (name, desired, actual, pid, detail, updated_at)
+       VALUES ('reader', 'running', 'running', 9999, NULL, ?)`
+    ).run(Date.now());
+    const d = fakeDeps({
+      isReaderAlive: vi.fn(() => false),
+      probePort: vi.fn(async () => true),
+      findReaderPids: vi.fn(async () => [55, 56])
+    });
+    setDepsForTests(d);
+    const r = await stopOne(db, 'reader');
+    expect(r.ok).toBe(true);
+    expect(d.stopReader).toHaveBeenCalledWith(55);
+    expect(d.stopReader).toHaveBeenCalledWith(56);
+    expect(status(db)[0].actual).toBe('stopped');
+  });
+
+  it('reconcile adopts an externally running reader', async () => {
+    makeProject();
+    const d = fakeDeps({
+      probePort: vi.fn(async () => true),
+      findReaderPids: vi.fn(async () => [777])
+    });
+    setDepsForTests(d);
+    await reconcile(db);
+    expect(status(db)[0].actual).toBe('running');
+    expect(status(db)[0].pid).toBe(777);
   });
 });
 
