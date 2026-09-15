@@ -45,13 +45,14 @@ if command -v docker >/dev/null 2>&1; then
       npm prune --omit=dev
       # Fail fast on a binding that does not load, instead of shipping a
       # dead tarball. Rebuild once if the first load fails.
-      if ! node -e "require('better-sqlite3')" 2>/dev/null; then
+      # NOTE: double quotes are escaped because this whole script is a
+      # single-quoted argument to docker run.
+      if ! node -e "require(\"better-sqlite3\")" 2>/dev/null; then
         echo "better-sqlite3 did not load - forcing rebuild"
         npm rebuild better-sqlite3 --foreground-scripts
       fi
-      node -e "require('better-sqlite3')"
-      echo "--- compiled native modules going into the tarball ---"
-      find node_modules -name "*.node" -print
+      node -e "require(\"better-sqlite3\")"
+      echo "better-sqlite3 loads OK"
       mkdir -p /out
       tar -czf "/out/$NAME.tar.gz" build node_modules package.json
       cd /out
