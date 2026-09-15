@@ -228,7 +228,7 @@ if [[ "$NO_SERVICE" -eq 0 ]]; then
   for _ in $(seq 1 30); do
     # --noproxy: health check must not route localhost through a proxy.
     code="$(curl --noproxy '*' -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT" || true)"
-    if [[ "$code" =~ ^(200|301|302|307|308)$ ]]; then ok=1; break; fi
+    if [[ "$code" =~ ^(200|301|302|303|307|308)$ ]]; then ok=1; break; fi
     sleep 1
   done
   if [[ "$ok" -ne 1 ]]; then
