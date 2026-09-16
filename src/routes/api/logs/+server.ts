@@ -1,5 +1,13 @@
 import type { RequestHandler } from './$types';
-import { recentLogs, subscribeLogs, type LogEntry } from '$lib/server/services/logbus';
+import { recentLogs, subscribeLogs, clearLogs, type LogEntry } from '$lib/server/services/logbus';
+
+// The client's Clear button wipes the buffer, not just its own view — a
+// refresh opens a new SSE stream that replays recentLogs(), so a view-only
+// clear would resurrect the lines.
+export const DELETE: RequestHandler = async () => {
+  clearLogs();
+  return new Response(null, { status: 204 });
+};
 
 export const GET: RequestHandler = async () => {
   const encoder = new TextEncoder();

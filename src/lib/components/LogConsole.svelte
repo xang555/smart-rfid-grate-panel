@@ -32,9 +32,13 @@
     <span class="text-logink/50">{lines.length} lines</span>
     <button
       type="button"
-      onclick={() => { lines = []; }}
+      onclick={() => {
+        lines = [];
+        // Server-side too: a refresh replays the buffer via recentLogs().
+        fetch('/api/logs', { method: 'DELETE' }).catch(() => {});
+      }}
       class="px-2 py-0.5 rounded border border-white/15 text-logink/70 hover:text-white hover:bg-white/10"
-      title="Clear the displayed log"
+      title="Clear the log (also clears it for future refreshes)"
     >Clear</button>
     <label class="ml-auto flex items-center gap-2 cursor-pointer">
       <input type="checkbox" bind:checked={autoScroll} class="accent-status-ok" />
