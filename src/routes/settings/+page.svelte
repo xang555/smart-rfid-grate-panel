@@ -1,9 +1,12 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { invalidateAll } from '$app/navigation';
   import AppShell from '$lib/components/AppShell.svelte';
   import FieldRenderer from '$lib/components/FieldRenderer.svelte';
   import ArrayField from '$lib/components/ArrayField.svelte';
+  import Toast from '$lib/components/Toast.svelte';
   import { renderToml } from '$lib/toml-render';
+  import { buildTargets, type ConnResult } from '$lib/connection-logic';
 
   let { data }: { data: PageData } = $props();
 
@@ -23,6 +26,15 @@
   let errors = $state<{ path: string; message: string }[]>([]);
   let showRaw = $state(false);
 
+  // connection test (per config tab)
+  let testing = $state(false);
+  let testResults = $state<ConnResult[] | null>(null);
+  // monitor url card
+  // svelte-ignore state_referenced_locally
+  let monitorUrl = $state<string>(data.monitorUrl);
+  let savingMonitor = $state(false);
+  let toast = $state<{ kind: 'ok' | 'error'; message: string } | null>(null);
+
   const current = $derived(data.files.find((f) => f.key === active)!);
   const draft = $derived(drafts[active]);
 
@@ -41,6 +53,7 @@
     active = key;
     message = '';
     errors = [];
+    testResults = null;
   }
 
   const rawPreview = $derived.by(() => {
@@ -64,6 +77,55 @@
       saving = false;
     }
   }
+
+  // Probes what the form currently shows (not the saved file), so an edited
+  // IP can be checked before committing it.
+  async function testConnection() {
+    if (testing) return;
+    testing = true; testResults = null; toast = null;
+    try {
+      const targets = buildTargets(active, draft);
+      const res = await fetch('/api/config/test-connection', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ targets })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast = { kind: 'error', message: body.message ?? 'Connection test failed.' };
+        return;
+      }
+      testResults = body.results;
+      const failed = body.results.filter((r: ConnResult) => !r.ok);
+      if (failed.length) {
+        toast = { kind: 'error', message: `${failed.length} connection${failed.length > 1 ? 's' : ''} failed:\n` +
+          failed.map((r: ConnResult) => `${r.label}: ${r.error}`).join('\n') };
+      }
+    } catch (err: any) {
+      toast = { kind: 'error', message: `Connection test failed: ${err?.message ?? err}` };
+    } finally {
+      testing = false;
+    }
+  }
+
+  async function saveMonitor() {
+    if (savingMonitor) return;
+    savingMonitor = true;
+    try {
+      const res = await fetch('/api/monitor', {
+        method: 'PUT', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: monitorUrl.trim() })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast = { kind: 'ok', message: 'Monitor URL saved.' };
+        await invalidateAll(); // layout refetch → topbar button updates
+      } else {
+        toast = { kind: 'error', message: body.message ?? 'Could not save the monitor URL.' };
+      }
+    } finally {
+      savingMonitor = false;
+    }
+  }
 </script>
 
 <AppShell title="Settings" active="settings">
@@ -77,6 +139,11 @@
         </button>
       {/each}
       <div class="ml-auto flex items-center gap-2 pb-1">
+        <button type="button" onclick={testConnection} disabled={testing}
+          class="px-3 py-1.5 text-sm rounded-md border border-hairline disabled:opacity-50"
+          title="Probe the addresses configured on this tab">
+          {testing ? 'Testing…' : 'Test connection'}
+        </button>
         <button type="button" onclick={() => (showRaw = !showRaw)}
           class="px-3 py-1.5 text-sm rounded-md border border-hairline">{showRaw ? 'Hide' : 'Show'} raw TOML</button>
         <button type="button" onclick={revert}
@@ -99,6 +166,28 @@
       <ul class="text-sm text-status-error list-disc pl-5">
         {#each errors as e (e.path)}<li><span class="mono">{e.path}</span> — {e.message}</li>{/each}
       </ul>
+    {/if}
+
+    {#if testResults}
+      <div class="rounded-card border border-hairline bg-card px-5 py-3 text-sm">
+        <h3 class="font-medium mb-2">Connection test — {current.schema.label}</h3>
+        <ul class="space-y-1">
+          {#each testResults as r (r.label + r.host + r.port)}
+            <li class="flex items-baseline gap-2">
+              <span class="{r.ok ? 'text-status-ok' : 'text-status-error'} font-medium">
+                {r.ok ? '✓' : '✕'}
+              </span>
+              <span class="font-medium">{r.label}</span>
+              <span class="mono text-ink-soft">{r.host}:{r.port}</span>
+              {#if r.ok}
+                <span class="text-ink-soft">({r.ms}ms)</span>
+              {:else}
+                <span class="text-status-error">{r.error}</span>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      </div>
     {/if}
 
     <div class="rounded-card bg-card border border-hairline shadow-sm px-5 divide-y divide-hairline">
@@ -126,5 +215,26 @@
         <pre class="mono p-4 overflow-x-auto text-[13px] text-logink">{rawPreview}</pre>
       </div>
     {/if}
+
+    <div class="rounded-card bg-card border border-hairline shadow-sm px-5 py-4">
+      <h3 class="font-medium">Monitor</h3>
+      <p class="text-sm text-ink-soft mt-1 mb-3">
+        URL of your monitoring webapp. When setup is complete, a monitor button
+        appears in the top bar and opens this URL in a new tab.
+      </p>
+      <div class="flex items-center gap-2">
+        <input
+          type="url"
+          bind:value={monitorUrl}
+          placeholder="https://monitor.example.com"
+          class="flex-1 rounded-md border border-hairline bg-transparent px-3 py-1.5 text-sm mono"
+        />
+        <button type="button" onclick={saveMonitor} disabled={savingMonitor}
+          class="px-4 py-1.5 text-sm rounded-md bg-accent text-white font-medium disabled:opacity-50">
+          {savingMonitor ? 'Saving…' : 'Save monitor URL'}
+        </button>
+      </div>
+    </div>
   </div>
+  <Toast toast={toast} ondismiss={() => (toast = null)} />
 </AppShell>
