@@ -159,7 +159,7 @@
     </div>
 
     {#if isMonitor}
-      <div class="rounded-card bg-card border border-hairline shadow-sm px-5 py-4 max-w-2xl">
+      <div class="rounded-card bg-card border border-hairline shadow-sm px-5 py-4 max-w-2xl mx-auto">
         <h3 class="font-medium">Monitor</h3>
         <p class="text-sm text-ink-soft mt-1 mb-3">
           URL of your monitoring webapp. When setup is complete, a monitor button
