@@ -30,6 +30,12 @@
   <div class="flex items-center gap-3 px-4 h-11 text-logink/90 text-sm border-b border-white/10">
     <span class="font-medium">Live log</span>
     <span class="text-logink/50">{lines.length} lines</span>
+    <button
+      type="button"
+      onclick={() => { lines = []; }}
+      class="px-2 py-0.5 rounded border border-white/15 text-logink/70 hover:text-white hover:bg-white/10"
+      title="Clear the displayed log"
+    >Clear</button>
     <label class="ml-auto flex items-center gap-2 cursor-pointer">
       <input type="checkbox" bind:checked={autoScroll} class="accent-status-ok" />
       Auto-scroll
