@@ -46,6 +46,7 @@
     setSection(sectionKey, { ...drafts[active][sectionKey], [fieldKey]: v });
   }
   function revert() {
+    if (!current) return; // monitor tab has no draft to revert
     drafts[active] = structuredClone(current.value);
     errors = [];
     message = '';
