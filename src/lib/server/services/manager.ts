@@ -84,15 +84,18 @@ export function status(db: Database.Database): ServiceStatus[] {
 }
 
 function readReaderAddr(db: Database.Database): { host: string; port: number } {
+  // The gateway binary binds IPAddress.Any:socket_port on THIS machine;
+  // speedway_address is the Impinj hardware it connects out to over LLRP.
+  // Readiness/adoption probes must target the local socket — probing the
+  // hardware at socket_port never connects and fails every panel start.
   const projectPath = getProjectPath(db);
   const file = resolveProjectFile(projectPath, SCHEMAS.reader.relPath);
-  let host = 'localhost';
+  const host = 'localhost';
   let port = 11000;
   try {
     const parsed: any = parse(fs.readFileSync(file, 'utf8'));
-    host = parsed?.speedway_address ?? 'localhost';
     port = Number(parsed?.socket_port ?? 11000);
-  } catch { /* fall back to defaults; readiness probe will fail loudly */ }
+  } catch { /* fall back to default; readiness probe will fail loudly */ }
   return { host, port };
 }
 

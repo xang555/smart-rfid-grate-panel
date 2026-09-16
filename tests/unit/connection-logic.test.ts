@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { buildTargets } from '../../src/lib/connection-logic';
 
 describe('buildTargets', () => {
-  it('builds the reader target from the flat section', () => {
+  it('builds the reader target against the LLRP port on the hardware, not the local socket port', () => {
     const t = buildTargets('reader', { '': { speedway_address: '192.168.55.12', socket_port: 11000 } });
-    expect(t).toEqual([{ label: 'Reader (speedway)', host: '192.168.55.12', port: 11000 }]);
+    // socket_port is what the local gateway listens on for the gate service;
+    // the Impinj hardware itself speaks LLRP on 5084. Probing the hardware at
+    // socket_port always fails even when the reader is reachable.
+    expect(t).toEqual([{ label: 'Reader (speedway)', host: '192.168.55.12', port: 5084 }]);
   });
 
   it('builds one target per camera row', () => {
@@ -46,7 +49,7 @@ describe('buildTargets', () => {
 
   it('reader keeps its primary target even when unset (reported, not hidden)', () => {
     expect(buildTargets('reader', {})).toEqual([
-      { label: 'Reader (speedway)', host: '', port: 11000 }
+      { label: 'Reader (speedway)', host: '', port: 5084 }
     ]);
     expect(buildTargets('cameras', { '': {}, ipcame: [] })).toEqual([]);
   });

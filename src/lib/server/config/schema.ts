@@ -75,7 +75,7 @@ const READER: ConfigSchema = {
       fields: [
         { key: 'reader_name', label: 'Reader name', type: 'string', default: 'My Reader' },
         { key: 'speedway_address', label: 'Reader IP address', help: 'IP of the Impinj Speedway reader.', type: 'string' },
-        { key: 'socket_port', label: 'Socket port', help: 'Port the reader listens on for the gate service. Default 11000.', type: 'number', min: 1, max: 65535, default: 11000 },
+        { key: 'socket_port', label: 'Socket port', help: 'Port the local reader gateway listens on for the gate service. Default 11000.', type: 'number', min: 1, max: 65535, default: 11000 },
         { key: 'session', label: 'Session', help: 'Impinj session (0–3). Default 1.', type: 'number', min: 0, max: 3, default: 1 },
         { key: 'tag_population', label: 'Tag population', help: 'Expected number of tags in range.', type: 'number', min: 1, default: 20 },
         { key: 'rf_mode', label: 'RF mode', help: 'Reader radio mode. Affects read rate and interference.', type: 'enum', enum: RF_MODE_VALUES, default: 2 },

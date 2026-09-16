@@ -269,6 +269,29 @@ describe('image pull', () => {
 });
 
 describe('existing install adoption', () => {
+  it('probes the local gateway socket, not the reader hardware, for readiness', async () => {
+    // speedway_address is the Impinj hardware; the gateway listens on
+    // socket_port on THIS machine. A readiness probe aimed at the hardware
+    // never connects, so every panel start fails while a terminal start works.
+    makeProject();
+    fs.writeFileSync(path.join(dir, 'config.toml'),
+      'speedway_address = "192.168.55.12"\nsocket_port = 11000\n');
+    const probed: Array<{ host: string; port: number }> = [];
+    const d = fakeDeps({
+      probePort: vi.fn(async (host: string, port: number) => {
+        probed.push({ host, port });
+        return probed.length > 1; // pre-spawn probe false, readiness probe true
+      })
+    });
+    setDepsForTests(d);
+    const r = await startOne(db, 'reader');
+    expect(r.ok).toBe(true);
+    expect(probed.length).toBeGreaterThan(0);
+    for (const p of probed) {
+      expect(p).toEqual({ host: 'localhost', port: 11000 });
+    }
+  });
+
   it('adopts an externally running reader instead of double-spawning', async () => {
     makeProject();
     const d = fakeDeps({

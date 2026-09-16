@@ -10,6 +10,11 @@ export interface ConnTarget {
   port: number;
 }
 
+// The Impinj hardware speaks LLRP on a fixed port (5084); socket_port in the
+// reader config is what the local gateway process listens on, so it must not
+// be used when probing the hardware itself.
+export const READER_LLRP_PORT = 5084;
+
 export interface ConnResult extends ConnTarget {
   ok: boolean;
   ms?: number;
@@ -23,7 +28,7 @@ export function buildTargets(file: string, draft: any): ConnTarget[] {
     out.push({
       label: 'Reader (speedway)',
       host: String(flat.speedway_address ?? ''),
-      port: Number(flat.socket_port ?? 11000)
+      port: READER_LLRP_PORT
     });
   } else if (file === 'cameras') {
     const rows: any[] = Array.isArray(draft?.ipcame) ? draft.ipcame : [];
