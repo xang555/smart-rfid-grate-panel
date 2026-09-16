@@ -35,8 +35,9 @@
   let savingMonitor = $state(false);
   let toast = $state<{ kind: 'ok' | 'error'; message: string } | null>(null);
 
-  const current = $derived(data.files.find((f) => f.key === active)!);
-  const draft = $derived(drafts[active]);
+  const isMonitor = $derived(active === 'monitor');
+  const current = $derived(isMonitor ? undefined : data.files.find((f) => f.key === active)!);
+  const draft = $derived(isMonitor ? null : drafts[active]);
 
   function setSection(sectionKey: string, v: unknown) {
     drafts[active] = { ...drafts[active], [sectionKey]: v };
@@ -57,9 +58,10 @@
   }
 
   const rawPreview = $derived.by(() => {
+    if (isMonitor) return '';
     // Same renderer the server writes with, so the preview cannot drift from
     // the file — and the flat section's '' key never reaches TOML as a name.
-    try { return renderToml(current.schema, draft); } catch { return '# invalid value'; }
+    try { return renderToml(current!.schema, draft); } catch { return '# invalid value'; }
   });
 
   async function save() {
@@ -131,110 +133,114 @@
 <AppShell title="Settings" active="settings">
   <div class="p-6 max-w-5xl mx-auto space-y-4">
     <div class="flex items-center gap-1 border-b border-hairline">
-      {#each data.files as f (f.key)}
-        <button type="button" onclick={() => switchTab(f.key)}
+      {#each [...data.files.map((f) => ({ key: f.key, label: f.schema.label })), { key: 'monitor', label: 'Monitor' }] as t (t.key)}
+        <button type="button" onclick={() => switchTab(t.key)}
           class="px-4 py-2 text-sm rounded-t-md -mb-px border-b-2
-                 {active === f.key ? 'border-accent font-medium' : 'border-transparent text-ink-soft hover:text-ink'}">
-          {f.schema.label}
+                 {active === t.key ? 'border-accent font-medium' : 'border-transparent text-ink-soft hover:text-ink'}">
+          {t.label}
         </button>
       {/each}
-      <div class="ml-auto flex items-center gap-2 pb-1">
-        <button type="button" onclick={testConnection} disabled={testing}
-          class="px-3 py-1.5 text-sm rounded-md border border-hairline disabled:opacity-50"
-          title="Probe the addresses configured on this tab">
-          {testing ? 'Testing…' : 'Test connection'}
-        </button>
-        <button type="button" onclick={() => (showRaw = !showRaw)}
-          class="px-3 py-1.5 text-sm rounded-md border border-hairline">{showRaw ? 'Hide' : 'Show'} raw TOML</button>
-        <button type="button" onclick={revert}
-          class="px-3 py-1.5 text-sm rounded-md border border-hairline">Revert</button>
-        <button type="button" onclick={save} disabled={saving}
-          class="px-4 py-1.5 text-sm rounded-md bg-accent text-white font-medium disabled:opacity-50">Save</button>
-      </div>
-    </div>
-
-    {#if !current.exists}
-      <div class="rounded-card border border-status-warn/40 bg-status-warn/10 p-4 text-sm">
-        <span class="mono">{data.projectPath}/{current.schema.relPath}</span> does not exist yet. Run setup first.
-      </div>
-    {/if}
-
-    {#if message}
-      <p class="text-sm {messageOk ? 'text-status-ok' : 'text-status-error'}">{message}</p>
-    {/if}
-    {#if errors.length}
-      <ul class="text-sm text-status-error list-disc pl-5">
-        {#each errors as e (e.path)}<li><span class="mono">{e.path}</span> — {e.message}</li>{/each}
-      </ul>
-    {/if}
-
-    {#if testResults}
-      <div class="rounded-card border border-hairline bg-card px-5 py-3 text-sm">
-        <h3 class="font-medium mb-2">Connection test — {current.schema.label}</h3>
-        <ul class="space-y-1">
-          {#each testResults as r (r.label + r.host + r.port)}
-            <li class="flex items-baseline gap-2">
-              <span class="{r.ok ? 'text-status-ok' : 'text-status-error'} font-medium">
-                {r.ok ? '✓' : '✕'}
-              </span>
-              <span class="font-medium">{r.label}</span>
-              <span class="mono text-ink-soft">{r.host}:{r.port}</span>
-              {#if r.ok}
-                <span class="text-ink-soft">({r.ms}ms)</span>
-              {:else}
-                <span class="text-status-error">{r.error}</span>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
-
-    <div class="rounded-card bg-card border border-hairline shadow-sm px-5 divide-y divide-hairline">
-      {#each current.schema.root as section (section.key)}
-        {#if section.isArray}
-          <ArrayField {section} rows={draft[section.key] ?? []}
-            onchange={(rows) => setSection(section.key, rows)} />
-        {:else}
-          <div class="py-3">
-            <h3 class="font-medium mb-1">{section.label}</h3>
-            {#each section.fields as f (f.key)}
-              <FieldRenderer field={f} value={draft[section.key]?.[f.key]}
-                onchange={(v) => setField(section.key, f.key, v)} />
-            {/each}
-          </div>
-        {/if}
-      {/each}
-    </div>
-
-    {#if showRaw}
-      <div class="bg-log rounded-card overflow-hidden border border-black/20">
-        <div class="px-4 h-10 flex items-center text-logink/90 text-sm border-b border-white/10">
-          Pending TOML — not written until you Save
+      {#if !isMonitor}
+        <div class="ml-auto flex items-center gap-2 pb-1">
+          <button type="button" onclick={testConnection} disabled={testing}
+            class="px-3 py-1.5 text-sm rounded-md border border-hairline disabled:opacity-50"
+            title="Probe the addresses configured on this tab">
+            {testing ? 'Testing…' : 'Test connection'}
+          </button>
+          <button type="button" onclick={() => (showRaw = !showRaw)}
+            class="px-3 py-1.5 text-sm rounded-md border border-hairline">{showRaw ? 'Hide' : 'Show'} raw TOML</button>
+          <button type="button" onclick={revert}
+            class="px-3 py-1.5 text-sm rounded-md border border-hairline">Revert</button>
+          <button type="button" onclick={save} disabled={saving}
+            class="px-4 py-1.5 text-sm rounded-md bg-accent text-white font-medium disabled:opacity-50">Save</button>
         </div>
-        <pre class="mono p-4 overflow-x-auto text-[13px] text-logink">{rawPreview}</pre>
-      </div>
-    {/if}
-
-    <div class="rounded-card bg-card border border-hairline shadow-sm px-5 py-4">
-      <h3 class="font-medium">Monitor</h3>
-      <p class="text-sm text-ink-soft mt-1 mb-3">
-        URL of your monitoring webapp. When setup is complete, a monitor button
-        appears in the top bar and opens this URL in a new tab.
-      </p>
-      <div class="flex items-center gap-2">
-        <input
-          type="url"
-          bind:value={monitorUrl}
-          placeholder="https://monitor.example.com"
-          class="flex-1 rounded-md border border-hairline bg-transparent px-3 py-1.5 text-sm mono"
-        />
-        <button type="button" onclick={saveMonitor} disabled={savingMonitor}
-          class="px-4 py-1.5 text-sm rounded-md bg-accent text-white font-medium disabled:opacity-50">
-          {savingMonitor ? 'Saving…' : 'Save monitor URL'}
-        </button>
-      </div>
+      {/if}
     </div>
+
+    {#if isMonitor}
+      <div class="rounded-card bg-card border border-hairline shadow-sm px-5 py-4 max-w-2xl">
+        <h3 class="font-medium">Monitor</h3>
+        <p class="text-sm text-ink-soft mt-1 mb-3">
+          URL of your monitoring webapp. When setup is complete, a monitor button
+          appears in the top bar and opens this URL in a new tab.
+        </p>
+        <div class="flex items-center gap-2">
+          <input
+            type="url"
+            bind:value={monitorUrl}
+            placeholder="https://monitor.example.com"
+            class="flex-1 rounded-md border border-hairline bg-transparent px-3 py-1.5 text-sm mono"
+          />
+          <button type="button" onclick={saveMonitor} disabled={savingMonitor}
+            class="px-4 py-1.5 text-sm rounded-md bg-accent text-white font-medium disabled:opacity-50">
+            {savingMonitor ? 'Saving…' : 'Save monitor URL'}
+          </button>
+        </div>
+      </div>
+    {:else}
+      {#if !current!.exists}
+        <div class="rounded-card border border-status-warn/40 bg-status-warn/10 p-4 text-sm">
+          <span class="mono">{data.projectPath}/{current!.schema.relPath}</span> does not exist yet. Run setup first.
+        </div>
+      {/if}
+
+      {#if message}
+        <p class="text-sm {messageOk ? 'text-status-ok' : 'text-status-error'}">{message}</p>
+      {/if}
+      {#if errors.length}
+        <ul class="text-sm text-status-error list-disc pl-5">
+          {#each errors as e (e.path)}<li><span class="mono">{e.path}</span> — {e.message}</li>{/each}
+        </ul>
+      {/if}
+
+      {#if testResults}
+        <div class="rounded-card border border-hairline bg-card px-5 py-3 text-sm">
+          <h3 class="font-medium mb-2">Connection test — {current!.schema.label}</h3>
+          <ul class="space-y-1">
+            {#each testResults as r (r.label + r.host + r.port)}
+              <li class="flex items-baseline gap-2">
+                <span class="{r.ok ? 'text-status-ok' : 'text-status-error'} font-medium">
+                  {r.ok ? '✓' : '✕'}
+                </span>
+                <span class="font-medium">{r.label}</span>
+                <span class="mono text-ink-soft">{r.host}:{r.port}</span>
+                {#if r.ok}
+                  <span class="text-ink-soft">({r.ms}ms)</span>
+                {:else}
+                  <span class="text-status-error">{r.error}</span>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+
+      <div class="rounded-card bg-card border border-hairline shadow-sm px-5 divide-y divide-hairline">
+        {#each current!.schema.root as section (section.key)}
+          {#if section.isArray}
+            <ArrayField {section} rows={draft![section.key] ?? []}
+              onchange={(rows) => setSection(section.key, rows)} />
+          {:else}
+            <div class="py-3">
+              <h3 class="font-medium mb-1">{section.label}</h3>
+              {#each section.fields as f (f.key)}
+                <FieldRenderer field={f} value={draft![section.key]?.[f.key]}
+                  onchange={(v) => setField(section.key, f.key, v)} />
+              {/each}
+            </div>
+          {/if}
+        {/each}
+      </div>
+
+      {#if showRaw}
+        <div class="bg-log rounded-card overflow-hidden border border-black/20">
+          <div class="px-4 h-10 flex items-center text-logink/90 text-sm border-b border-white/10">
+            Pending TOML — not written until you Save
+          </div>
+          <pre class="mono p-4 overflow-x-auto text-[13px] text-logink">{rawPreview}</pre>
+        </div>
+      {/if}
+    {/if}
   </div>
   <Toast toast={toast} ondismiss={() => (toast = null)} />
 </AppShell>
